@@ -1,0 +1,121 @@
+{
+  "app": {
+    "name": "Berun",
+    "tagline": "Running log & training plan"
+  },
+  "nav": {
+    "today": "Today",
+    "plan": "Plan",
+    "log": "Log",
+    "progress": "Progress",
+    "settings": "Settings"
+  },
+  "today": {
+    "weekOf": "Week {current} of {total}",
+    "phaseBase": "Base building",
+    "restDay": "Rest day",
+    "restReason": "Recovery as planned",
+    "logRun": "Log run",
+    "minutesTarget": "Target {minutes} min",
+    "zoneTarget": "Zone {zone}",
+    "weekProgress": "Week progress",
+    "weekStatusOk": "Load looks good",
+    "weekStatusHigh": "Building fast — deload next week",
+    "planAdjusted": "Plan was adjusted",
+    "viewReason": "View reason",
+    "addHrMax": "Add HR max for better zones"
+  },
+  "log": {
+    "title": "Log run",
+    "followPlan": "Follow plan",
+    "offPlan": "Off plan",
+    "distanceKm": "Distance (km)",
+    "duration": "Duration",
+    "pace": "Pace (computed)",
+    "avgHr": "Avg HR",
+    "maxHr": "Max HR",
+    "rpe": "Effort (RPE)",
+    "feel": "Feel",
+    "feelGood": "Good",
+    "feelOk": "OK",
+    "feelBad": "Bad",
+    "painQuestion": "Any pain?",
+    "painScore": "Pain level",
+    "altersGait": "Alters gait",
+    "note": "Note",
+    "moreDetails": "More details",
+    "save": "Save",
+    "saved": "Saved"
+  },
+  "plan": {
+    "title": "Training plan",
+    "week": "Week {n}",
+    "recovery": "Recovery week (planned)",
+    "recoveryHint": "Reduced load is the goal this week",
+    "targetMinutes": "Target {minutes} min",
+    "reconcile": "Update plan from actuals",
+    "preview": "Preview changes",
+    "confirm": "Confirm update"
+  },
+  "progress": {
+    "title": "Progress",
+    "weeklyMinutes": "Minutes per week",
+    "intensitySplit": "Intensity split",
+    "easyTarget": "Easy target 80%",
+    "efTrend": "Efficiency (EF)",
+    "acwr": "Load balance (ACWR)",
+    "acwrHint": "0.8–1.3 is often considered a safe zone — advisory only",
+    "acwrCollecting": "Collecting data — {days} days until shown",
+    "consistency": "{pct}% plan adherence",
+    "streak": "{weeks} week streak",
+    "benchmark": "Monthly test"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Athlete profile",
+    "level": "Level",
+    "levelBeginner": "Beginner",
+    "levelReturning": "Returning",
+    "levelRegular": "Regular",
+    "weekdays": "Available days",
+    "hrMax": "HR max",
+    "hrMaxEstimate": "Estimate from age",
+    "progression": "Progression rate",
+    "recoveryCycle": "Recovery cycle",
+    "language": "Language",
+    "theme": "Theme",
+    "location": "Weather location",
+    "glossary": "Glossary",
+    "save": "Save"
+  },
+  "onboarding": {
+    "title": "Get started",
+    "disclaimer": "Not medical advice. Consult a doctor if you have concerns.",
+    "parq": "Do you have health limitations advised by a doctor?",
+    "weeklyMinutes": "About how many minutes do you run per week?",
+    "notSure": "Not sure — 2-week baseline mode",
+    "createPlan": "Create plan"
+  },
+  "login": {
+    "title": "Sign in",
+    "google": "Continue with Google"
+  },
+  "heat": {
+    "effortOnly": "Very humid — run by feel, not pace",
+    "caution": "Hot conditions — ease effort",
+    "mild": "Slightly humid"
+  },
+  "workout": {
+    "easy": "Easy",
+    "long": "Long",
+    "tempo": "Tempo",
+    "runWalk": "Run-walk",
+    "rest": "Rest"
+  },
+  "glossary": {
+    "title": "Glossary",
+    "rpe": "RPE — perceived effort 1–10",
+    "acwr": "ACWR — acute vs chronic load ratio",
+    "ef": "EF — speed ÷ avg HR, higher is better"
+  }
+}

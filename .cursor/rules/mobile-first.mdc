@@ -1,0 +1,16 @@
+---
+description: Mobile-first responsive layout and touch targets
+alwaysApply: true
+---
+
+# Mobile-First UI
+
+- Write base styles for mobile (360px+), then add `sm:` `md:` `lg:` breakpoints
+- Primary CTAs in thumb zone (lower half of screen on mobile)
+- Minimum touch target: 48px height, 8px gap between tappable elements
+- No `Table` on mobile — use stacked cards
+- Container: `max-w-md` mobile, `max-w-5xl` on `lg+`
+- Bottom nav on mobile, sidebar on `lg+`
+- Contrast ratio ≥ 4.5:1 for text
+- Status indicators: color + icon + text (never color alone)
+- Use `tabular-nums` for numeric displays

@@ -1,0 +1,13 @@
+---
+description: Thai typography conventions
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# Thai Typography
+
+- Font stack: `Inter, "Noto Sans Thai", sans-serif`
+- Minimum font weight: 400 (never 300 for Thai body text)
+- Use `leading-relaxed` or `leading-loose` for Thai paragraphs
+- Never apply `uppercase` or `tracking-*` to Thai text
+- Technical terms: Thai label first, English in parentheses on first use (e.g. ความเหนื่อย (RPE))

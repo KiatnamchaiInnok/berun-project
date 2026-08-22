@@ -1,0 +1,403 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Sport {
+  running
+}
+
+enum WorkoutType {
+  easy
+  long
+  tempo
+  runWalk
+  rest
+}
+
+enum Level {
+  beginner
+  returning
+  regular
+}
+
+enum PainLocation {
+  knee
+  shin
+  achilles
+  foot
+  hip
+  other
+}
+
+enum HrMaxSource {
+  fieldTest
+  tanakaEstimate
+  manual
+}
+
+enum ExternalSource {
+  manual
+  strava
+  garmin
+}
+
+enum PlanStatus {
+  draft
+  active
+  completed
+  archived
+}
+
+enum PlanVersionReason {
+  initial
+  manual
+  reconcile
+  painDeload
+  detraining
+  benchmarkUpdate
+}
+
+enum SessionStatus {
+  planned
+  completed
+  skipped
+  moved
+}
+
+enum IntensityZone {
+  zone1
+  zone2
+  zone3
+  zone4
+  zone5
+}
+
+enum BenchmarkType {
+  fixedRouteEf
+  timeTrial
+}
+
+enum Feel {
+  good
+  ok
+  bad
+}
+
+enum Unit {
+  km
+}
+
+enum Locale {
+  th
+  en
+}
+
+enum AdjustmentRule {
+  painGate
+  detraining
+  reconcile
+  acwrAdvisory
+  heatAdvisory
+  noDoubleProgression
+  longRunCap
+}
+
+enum PlanGoal {
+  health
+}
+
+model User {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified") @db.Timestamptz(6)
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  accounts       Account[]
+  sessions       Session[]
+  athleteProfile AthleteProfile?
+  trainingPlans  TrainingPlan[]
+  activityLogs   ActivityLog[]
+  painReports    PainReport[]
+  benchmarks     Benchmark[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid(7)) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  identifier String
+  token      String
+  expires    DateTime @db.Timestamptz(6)
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model AthleteProfile {
+  id                    String       @id @default(uuid(7)) @db.Uuid
+  userId                String       @unique @map("user_id") @db.Uuid
+  level                 Level        @default(beginner)
+  availableWeekdays     Int[]        @default([1, 3, 5]) @map("available_weekdays")
+  birthYear             Int?         @map("birth_year")
+  hrMax                 Int?         @map("hr_max")
+  hrMaxSource           HrMaxSource? @map("hr_max_source")
+  hrMaxUpdatedAt        DateTime?    @map("hr_max_updated_at") @db.Timestamptz(6)
+  restingHr             Int?         @map("resting_hr")
+  progressionRatePct      Int          @default(10) @map("progression_rate_pct")
+  buildWeeks            Int          @default(3) @map("build_weeks")
+  recoveryReductionPct  Int          @default(25) @map("recovery_reduction_pct")
+  preferredUnit         Unit         @default(km) @map("preferred_unit")
+  locale                Locale       @default(th)
+  timezone              String       @default("Asia/Bangkok")
+  defaultLat            Decimal?     @map("default_lat") @db.Decimal(8, 5)
+  defaultLon            Decimal?     @map("default_lon") @db.Decimal(8, 5)
+  parqCompletedAt       DateTime?    @map("parq_completed_at") @db.Timestamptz(6)
+  disclaimerAcceptedAt  DateTime?    @map("disclaimer_accept_at") @db.Timestamptz(6)
+  onboardingCompletedAt DateTime?    @map("onboarding_completed_at") @db.Timestamptz(6)
+  baselineMode          Boolean      @default(false) @map("baseline_mode")
+  createdAt             DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("athlete_profiles")
+}
+
+model TrainingPlan {
+  id               String     @id @default(uuid(7)) @db.Uuid
+  userId           String     @map("user_id") @db.Uuid
+  goal             PlanGoal   @default(health)
+  startDate        DateTime   @map("start_date") @db.Date
+  totalWeeks       Int        @map("total_weeks")
+  status           PlanStatus @default(active)
+  activeVersionId  String?    @map("active_version_id") @db.Uuid
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions  PlanVersion[]
+  adjustments PlanAdjustment[]
+
+  @@index([userId, status])
+  @@map("training_plans")
+}
+
+model PlanVersion {
+  id            String            @id @default(uuid(7)) @db.Uuid
+  planId        String            @map("plan_id") @db.Uuid
+  userId        String            @map("user_id") @db.Uuid
+  versionNo     Int               @map("version_no")
+  reason        PlanVersionReason
+  engineVersion String            @map("engine_version")
+  inputSnapshot Json              @map("input_snapshot")
+  supersededAt  DateTime?         @map("superseded_at") @db.Timestamptz(6)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  plan        TrainingPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  weeks       PlanWeek[]
+  adjustments PlanAdjustment[]
+
+  @@unique([planId, versionNo])
+  @@index([userId])
+  @@map("plan_versions")
+}
+
+model PlanWeek {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  planVersionId         String   @map("plan_version_id") @db.Uuid
+  userId                String   @map("user_id") @db.Uuid
+  weekIndex             Int      @map("week_index")
+  blockIndex            Int      @map("block_index")
+  weekStartDate         DateTime @map("week_start_date") @db.Date
+  isRecoveryWeek        Boolean  @default(false) @map("is_recovery_week")
+  targetMinutes         Int      @map("target_minutes")
+  targetLongRunMinutes  Int      @map("target_long_run_minutes")
+  targetEasySharePct    Int      @default(80) @map("target_easy_share_pct")
+  targetDistanceM       Int?     @map("target_distance_m")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  planVersion PlanVersion      @relation(fields: [planVersionId], references: [id], onDelete: Cascade)
+  sessions    PlannedSession[]
+
+  @@unique([planVersionId, weekIndex])
+  @@index([userId])
+  @@map("plan_weeks")
+}
+
+model PlannedSession {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  planWeekId         String         @map("plan_week_id") @db.Uuid
+  userId             String         @map("user_id") @db.Uuid
+  scheduledDate      DateTime       @map("scheduled_date") @db.Date
+  sequence           Int            @default(0)
+  sport              Sport          @default(running)
+  workoutType        WorkoutType    @map("workout_type")
+  targetDurationSec  Int            @map("target_duration_sec")
+  targetDistanceM    Int?           @map("target_distance_m")
+  targetZone         IntensityZone? @map("target_zone")
+  runWalkPattern     Json?          @map("run_walk_pattern")
+  status             SessionStatus  @default(planned)
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  planWeek    PlanWeek     @relation(fields: [planWeekId], references: [id], onDelete: Cascade)
+  activityLog ActivityLog?
+
+  @@unique([planWeekId, scheduledDate, sequence])
+  @@index([userId, scheduledDate])
+  @@map("planned_sessions")
+}
+
+model ActivityLog {
+  id                   String         @id @default(uuid(7)) @db.Uuid
+  userId               String         @map("user_id") @db.Uuid
+  trainingDate         DateTime       @map("training_date") @db.Date
+  startedAt            DateTime?      @map("started_at") @db.Timestamptz(6)
+  sport                Sport          @default(running)
+  workoutType          WorkoutType    @map("workout_type")
+  durationSec          Int            @map("duration_sec")
+  distanceM            Int?           @map("distance_m")
+  avgHr                Int?           @map("avg_hr")
+  maxHr                Int?           @map("max_hr")
+  rpe                  Int?
+  feel                 Feel?
+  note                 String?        @db.Text
+  externalSource       ExternalSource @default(manual) @map("external_source")
+  externalId           String?        @map("external_id")
+  plannedSessionId     String?        @unique @map("planned_session_id") @db.Uuid
+  weatherObservationId String?        @map("weather_observation_id") @db.Uuid
+  deletedAt            DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plannedSession     PlannedSession?     @relation(fields: [plannedSessionId], references: [id], onDelete: SetNull)
+  weatherObservation WeatherObservation? @relation(fields: [weatherObservationId], references: [id], onDelete: SetNull)
+  painReports        PainReport[]
+  benchmark          Benchmark?
+
+  @@unique([externalSource, externalId])
+  @@index([userId, trainingDate(sort: Desc)])
+  @@index([userId, sport, trainingDate])
+  @@map("activity_logs")
+}
+
+model PainReport {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  userId        String       @map("user_id") @db.Uuid
+  activityLogId String?      @map("activity_log_id") @db.Uuid
+  reportedDate  DateTime     @map("reported_date") @db.Date
+  location      PainLocation
+  score         Int
+  altersGait    Boolean      @default(false) @map("alters_gait")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityLog ActivityLog? @relation(fields: [activityLogId], references: [id], onDelete: Cascade)
+
+  @@index([userId, location, reportedDate])
+  @@map("pain_reports")
+}
+
+model Benchmark {
+  id                String        @id @default(uuid(7)) @db.Uuid
+  userId            String        @map("user_id") @db.Uuid
+  activityLogId     String?       @unique @map("activity_log_id") @db.Uuid
+  performedOn       DateTime      @map("performed_on") @db.Date
+  type              BenchmarkType
+  distanceM         Int           @map("distance_m")
+  durationSec       Int           @map("duration_sec")
+  avgHr             Int?          @map("avg_hr")
+  efficiencyFactor  Decimal?      @map("efficiency_factor") @db.Decimal(6, 3)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityLog ActivityLog? @relation(fields: [activityLogId], references: [id], onDelete: SetNull)
+
+  @@index([userId, performedOn])
+  @@map("benchmarks")
+}
+
+model WeatherObservation {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  observedDate DateTime @map("observed_date") @db.Date
+  hour         Int?
+  lat          Decimal  @db.Decimal(8, 5)
+  lon          Decimal  @db.Decimal(8, 5)
+  tempC        Decimal  @map("temp_c") @db.Decimal(4, 1)
+  humidityPct  Int      @map("humidity_pct")
+  dewPointC    Decimal  @map("dew_point_c") @db.Decimal(4, 1)
+  windKph      Decimal? @map("wind_kph") @db.Decimal(5, 1)
+  source       String   @default("open-meteo")
+  fetchedAt    DateTime @map("fetched_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  activityLogs ActivityLog[]
+
+  @@unique([observedDate, hour, lat, lon])
+  @@map("weather_observations")
+}
+
+model PlanAdjustment {
+  id            String         @id @default(uuid(7)) @db.Uuid
+  planId        String         @map("plan_id") @db.Uuid
+  planVersionId String?        @map("plan_version_id") @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  rule          AdjustmentRule
+  triggeredAt   DateTime       @map("triggered_at") @db.Timestamptz(6)
+  input         Json
+  outcome       Json
+  messageKey    String         @map("message_key")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  plan        TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planVersion PlanVersion? @relation(fields: [planVersionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, triggeredAt(sort: Desc)])
+  @@map("plan_adjustments")
+}

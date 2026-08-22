@@ -1,0 +1,12 @@
+---
+description: Prisma UUID v7 conventions for all tables
+globs: **/schema.prisma
+alwaysApply: false
+---
+
+# Prisma UUID Rules
+
+- Every table PK: `id String @id @default(uuid(7)) @db.Uuid`
+- Every FK column: `@db.Uuid` matching referenced PK type
+- Never use `@default(cuid())` or autoincrement for domain tables
+- Seed data only via Prisma Client (uuid(7) is client-generated)

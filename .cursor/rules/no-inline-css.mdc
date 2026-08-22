@@ -1,0 +1,20 @@
+---
+description: No inline CSS — Tailwind and cn() only
+globs: **/*.{tsx,jsx}
+alwaysApply: false
+---
+
+# No Inline CSS
+
+- Never use `style={{}}` on components
+- Never use inline CSS strings or ad-hoc CSS modules
+- Use Tailwind utility classes, `cn()`, and `cva` from `@/lib/utils`
+- Charts: use Recharts props or Tailwind on wrappers — not inline styles
+
+```tsx
+// ❌ BAD
+<div style={{ padding: 16 }} className="flex">
+
+// ✅ GOOD
+<div className="flex p-4">
+```
