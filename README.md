@@ -17,13 +17,22 @@ Personal running training app with science-based plan generation, manual logging
 1. Copy `.env.example` to `.env.local` and fill values:
 
 ```bash
-DATABASE_URL=postgresql://...:6543/postgres?pgbouncer=true
-DIRECT_URL=postgresql://...:5432/postgres
+# Copy connection strings from Supabase → Project Settings → Database → Connect
+# Special characters in the password must be URL-encoded (@ → %40, # → %23, etc.)
+
+# Transaction pooler (Prisma queries at runtime)
+DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true
+
+# Direct or session pooler (Prisma db push / migrations)
+DIRECT_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
+
 AUTH_SECRET=...
 AUTH_GOOGLE_ID=...
 AUTH_GOOGLE_SECRET=...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+> Prisma CLI reads `.env.local` via `dotenv-cli` in `pnpm db:*` scripts. Next.js also loads `.env.local` automatically.
 
 2. Install & generate:
 
