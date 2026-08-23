@@ -106,6 +106,8 @@
     "title": "Get started",
     "disclaimer": "Not medical advice. Consult a doctor if you have concerns.",
     "parq": "Do you have health limitations advised by a doctor?",
+    "birthYear": "Birth year",
+    "birthYearHint": "Used to estimate HR max for training zones",
     "weeklyMinutes": "About how many minutes do you run per week?",
     "notSure": "Not sure — 2-week baseline mode",
     "createPlan": "Create plan",
@@ -135,5 +137,21 @@
     "rpe": "RPE — perceived effort 1–10",
     "acwr": "ACWR — acute vs chronic load ratio",
     "ef": "EF — speed ÷ avg HR, higher is better"
+  },
+  "segment": {
+    "barLabel": "Workout segments",
+    "warmup": "Warm-up",
+    "activation": "Activation",
+    "main": "Main set",
+    "cooldown": "Cool-down",
+    "rest": "Rest",
+    "durationMin": "{minutes} min",
+    "zoneHr": "Zone {zone} ({range})",
+    "zoneRpe": "RPE {rpe}",
+    "stridesDetail": "{count} strides, {duration}s each, {rest}s rest",
+    "intervalsDetail": "{reps}x{distance}m, rest {rest}s",
+    "tempoDetail": "{minutes} min steady",
+    "fartlekDetail": "{repeats}x {fast}s fast / {easy}s easy",
+    "activationStrides": "{count} strides"
   }
 }

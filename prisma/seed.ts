@@ -1,10 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-import { ENGINE_VERSION, generatePlan } from "../src/lib/engine/plan-engine";
+import { ENGINE_VERSION, generatePlan, tanakaHrMax } from "../src/lib/engine/plan-engine";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const email = "demo@berun.local";
+  const birthYear = 1990;
+  const hrMax = tanakaHrMax(new Date().getFullYear() - birthYear);
+
   const user =
     (await prisma.user.findUnique({ where: { email } })) ??
     (await prisma.user.create({
@@ -15,6 +18,10 @@ async function main() {
           create: {
             level: "regular",
             availableWeekdays: [1, 3, 5, 6],
+            birthYear,
+            hrMax,
+            hrMaxSource: "tanakaEstimate",
+            hrMaxUpdatedAt: new Date(),
             onboardingCompletedAt: new Date(),
             disclaimerAcceptedAt: new Date(),
             parqCompletedAt: new Date(),
@@ -24,6 +31,11 @@ async function main() {
         },
       },
     }));
+
+  await prisma.athleteProfile.updateMany({
+    where: { userId: user.id },
+    data: { birthYear, hrMax, hrMaxSource: "tanakaEstimate", hrMaxUpdatedAt: new Date() },
+  });
 
   await prisma.trainingPlan.updateMany({
     where: { userId: user.id, status: "active" },

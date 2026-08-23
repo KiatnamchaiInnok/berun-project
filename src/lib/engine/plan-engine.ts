@@ -63,6 +63,28 @@ export type WorkoutDetail =
   | IntervalsDetail
   | TempoDetail;
 
+export type SegmentType = "warmup" | "activation" | "main" | "rest" | "cooldown";
+
+export interface WorkoutSegment {
+  type: SegmentType;
+  durationMin: number;
+  zone: IntensityZone | null;
+  rpe: string;
+  labelKey: string;
+  detailKey?: string;
+  detailParams?: Record<string, string | number>;
+}
+
+export interface WorkoutSegments {
+  segments: WorkoutSegment[];
+  totalDurationMin: number;
+}
+
+export interface WorkoutDetailSummary {
+  key: string;
+  params: Record<string, string | number>;
+}
+
 export interface PlannedSessionDraft {
   scheduledDate: Date;
   sequence: number;
@@ -693,23 +715,243 @@ export function heatAdvisoryFromDewPoint(dewPointC: number): {
   return { level: "ok", paceAdjustmentPct: 0, messageKey: "heat.ok" };
 }
 
+function segment(
+  type: SegmentType,
+  durationMin: number,
+  zone: IntensityZone | null,
+  rpe: string,
+  labelKey: string,
+  detailKey?: string,
+  detailParams?: Record<string, string | number>,
+): WorkoutSegment {
+  return {
+    type,
+    durationMin: Math.max(1, Math.round(durationMin)),
+    zone,
+    rpe,
+    labelKey,
+    detailKey,
+    detailParams,
+  };
+}
+
+function isStridesDetail(d: WorkoutDetail): d is StridesDetail {
+  return "count" in d && "durationSec" in d;
+}
+
+function isFartlekDetail(d: WorkoutDetail): d is FartlekDetail {
+  return "repeats" in d && "segments" in d;
+}
+
+function isIntervalsDetail(d: WorkoutDetail): d is IntervalsDetail {
+  return "reps" in d && "repDistanceM" in d;
+}
+
+function isTempoDetail(d: WorkoutDetail): d is TempoDetail {
+  return "steadyMinutes" in d && "warmupMin" in d;
+}
+
+export function buildWorkoutSegments(
+  workoutType: WorkoutType,
+  detail: WorkoutDetail | null,
+  totalMinutes: number,
+): WorkoutSegments | null {
+  if (workoutType === "rest") return null;
+
+  const total = Math.max(1, Math.round(totalMinutes));
+  const segments: WorkoutSegment[] = [];
+
+  switch (workoutType) {
+    case "easy":
+    case "long": {
+      const warmup = 5;
+      const cooldown = 5;
+      const mainZone: IntensityZone = "zone2";
+      segments.push(
+        segment("warmup", warmup, "zone1", "2-3", "warmup"),
+        segment("main", total - warmup - cooldown, mainZone, getRpeGuide(workoutType), "main"),
+        segment("cooldown", cooldown, "zone1", "2-3", "cooldown"),
+      );
+      break;
+    }
+    case "runWalk": {
+      const warmup = 5;
+      const cooldown = 5;
+      segments.push(
+        segment("warmup", warmup, "zone1", "2-3", "warmup"),
+        segment("main", total - warmup - cooldown, "zone1", getRpeGuide(workoutType), "main"),
+        segment("cooldown", cooldown, "zone1", "2-3", "cooldown"),
+      );
+      break;
+    }
+    case "strides": {
+      const warmup = 10;
+      const cooldown = 5;
+      const strides = detail && isStridesDetail(detail) ? detail : buildStridesDetail();
+      segments.push(
+        segment("warmup", warmup, "zone2", "3-4", "warmup"),
+        segment(
+          "main",
+          total - warmup - cooldown,
+          "zone2",
+          getRpeGuide(workoutType),
+          "main",
+          "stridesDetail",
+          {
+            count: strides.count,
+            duration: strides.durationSec,
+            rest: strides.restSec,
+          },
+        ),
+        segment("cooldown", cooldown, "zone1", "2-3", "cooldown"),
+      );
+      break;
+    }
+    case "fartlek": {
+      const warmup = 10;
+      const activation = 2;
+      const cooldown = 10;
+      const fartlek = detail && isFartlekDetail(detail) ? detail : buildFartlekDetail();
+      const seg = fartlek.segments[0];
+      segments.push(
+        segment("warmup", warmup, "zone2", "3-4", "warmup"),
+        segment("activation", activation, "zone4", "7-8", "activation", "activationStrides", {
+          count: 3,
+        }),
+        segment(
+          "main",
+          total - warmup - activation - cooldown,
+          "zone3",
+          getRpeGuide(workoutType),
+          "main",
+          "fartlekDetail",
+          {
+            repeats: fartlek.repeats,
+            fast: seg.fastSec,
+            easy: seg.easySec,
+          },
+        ),
+        segment("cooldown", cooldown, "zone1", "2-3", "cooldown"),
+      );
+      break;
+    }
+    case "tempo": {
+      const tempo = detail && isTempoDetail(detail) ? detail : buildTempoDetail(total);
+      const warmup = tempo.warmupMin;
+      const activation = 2;
+      const cooldown = tempo.cooldownMin;
+      segments.push(
+        segment("warmup", warmup, "zone2", "3-4", "warmup"),
+        segment("activation", activation, "zone4", "7-8", "activation", "activationStrides", {
+          count: 3,
+        }),
+        segment(
+          "main",
+          tempo.steadyMinutes,
+          "zone3",
+          getRpeGuide(workoutType),
+          "main",
+          "tempoDetail",
+          { minutes: tempo.steadyMinutes },
+        ),
+        segment("cooldown", cooldown, "zone1", "2-3", "cooldown"),
+      );
+      break;
+    }
+    case "intervals": {
+      const warmup = 15;
+      const activation = 2;
+      const cooldown = 12;
+      const intervals = detail && isIntervalsDetail(detail) ? detail : buildIntervalsDetail("beginner");
+      segments.push(
+        segment("warmup", warmup, "zone2", "3-4", "warmup"),
+        segment("activation", activation, "zone4", "7-8", "activation", "activationStrides", {
+          count: 4,
+        }),
+        segment(
+          "main",
+          total - warmup - activation - cooldown,
+          intervals.targetZone,
+          getRpeGuide(workoutType),
+          "main",
+          "intervalsDetail",
+          {
+            reps: intervals.reps,
+            distance: intervals.repDistanceM,
+            rest: intervals.restSec,
+          },
+        ),
+        segment("cooldown", cooldown, "zone1", "2-3", "cooldown"),
+      );
+      break;
+    }
+    default:
+      return null;
+  }
+
+  const sum = segments.reduce((acc, s) => acc + s.durationMin, 0);
+  if (sum !== total && segments.length > 0) {
+    const mainIdx = segments.findIndex((s) => s.type === "main");
+    if (mainIdx >= 0) {
+      segments[mainIdx].durationMin += total - sum;
+      segments[mainIdx].durationMin = Math.max(1, segments[mainIdx].durationMin);
+    }
+  }
+
+  return { segments, totalDurationMin: total };
+}
+
 export function formatWorkoutDetailSummary(
   workoutType: WorkoutType,
   detail: WorkoutDetail | null,
-): string | null {
+): WorkoutDetailSummary | null {
   if (!detail) return null;
 
-  if (workoutType === "strides" && "count" in detail) {
-    return `${detail.count} strides`;
+  if (workoutType === "strides" && isStridesDetail(detail)) {
+    return {
+      key: "stridesDetail",
+      params: { count: detail.count, duration: detail.durationSec, rest: detail.restSec },
+    };
   }
-  if (workoutType === "fartlek" && "repeats" in detail && "segments" in detail) {
-    return `${detail.repeats}x fartlek`;
+  if (workoutType === "fartlek" && isFartlekDetail(detail)) {
+    const seg = detail.segments[0];
+    return {
+      key: "fartlekDetail",
+      params: { repeats: detail.repeats, fast: seg.fastSec, easy: seg.easySec },
+    };
   }
-  if (workoutType === "intervals" && "reps" in detail && "repDistanceM" in detail) {
-    return `${detail.reps}x${detail.repDistanceM}m`;
+  if (workoutType === "intervals" && isIntervalsDetail(detail)) {
+    return {
+      key: "intervalsDetail",
+      params: {
+        reps: detail.reps,
+        distance: detail.repDistanceM,
+        rest: detail.restSec,
+      },
+    };
   }
-  if (workoutType === "tempo" && "steadyMinutes" in detail) {
-    return `${detail.steadyMinutes}m tempo`;
+  if (workoutType === "tempo" && isTempoDetail(detail)) {
+    return {
+      key: "tempoDetail",
+      params: { minutes: detail.steadyMinutes },
+    };
   }
   return null;
+}
+
+export function zoneColorClass(zone: IntensityZone | null): string {
+  switch (zone) {
+    case "zone1":
+      return "bg-blue-200 dark:bg-blue-900";
+    case "zone2":
+      return "bg-green-200 dark:bg-green-900";
+    case "zone3":
+      return "bg-yellow-200 dark:bg-yellow-900";
+    case "zone4":
+      return "bg-orange-200 dark:bg-orange-900";
+    case "zone5":
+      return "bg-red-200 dark:bg-red-900";
+    default:
+      return "bg-muted";
+  }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assignPhase,
+  buildWorkoutSegments,
   computeEwmaAcwr,
   computeHrZones,
   evaluateDetraining,
@@ -276,6 +277,67 @@ describe("formatWorkoutDetailSummary", () => {
       restSec: 90,
       targetZone: "zone4",
     });
-    expect(summary).toBe("5x800m");
+    expect(summary).toEqual({
+      key: "intervalsDetail",
+      params: { reps: 5, distance: 800, rest: 90 },
+    });
+  });
+});
+
+describe("buildWorkoutSegments", () => {
+  const workoutTypes = [
+    "easy",
+    "long",
+    "runWalk",
+    "strides",
+    "fartlek",
+    "tempo",
+    "intervals",
+  ] as const;
+
+  for (const type of workoutTypes) {
+    it(`builds segments for ${type} that sum to total minutes`, () => {
+      const totalMinutes = 45;
+      const detail =
+        type === "intervals"
+          ? { repDistanceM: 400, reps: 6, restSec: 90, targetZone: "zone4" as const }
+          : type === "tempo"
+            ? { steadyMinutes: 20, warmupMin: 12, cooldownMin: 10 }
+            : type === "fartlek"
+              ? { segments: [{ fastSec: 60, easySec: 90 }], repeats: 6 }
+              : type === "strides"
+                ? { count: 6, durationSec: 25, restSec: 60 }
+                : null;
+
+      const result = buildWorkoutSegments(type, detail, totalMinutes);
+      expect(result).not.toBeNull();
+      const sum = result!.segments.reduce((acc, s) => acc + s.durationMin, 0);
+      expect(sum).toBe(totalMinutes);
+      expect(result!.totalDurationMin).toBe(totalMinutes);
+    });
+  }
+
+  it("assigns zone2 to easy main set", () => {
+    const result = buildWorkoutSegments("easy", null, 30);
+    const main = result!.segments.find((s) => s.type === "main");
+    expect(main?.zone).toBe("zone2");
+  });
+
+  it("includes warmup and cooldown for intervals", () => {
+    const result = buildWorkoutSegments(
+      "intervals",
+      { repDistanceM: 400, reps: 6, restSec: 90, targetZone: "zone4" },
+      55,
+    );
+    expect(result!.segments.some((s) => s.type === "warmup")).toBe(true);
+    expect(result!.segments.some((s) => s.type === "activation")).toBe(true);
+    expect(result!.segments.some((s) => s.type === "cooldown")).toBe(true);
+    const main = result!.segments.find((s) => s.type === "main");
+    expect(main?.zone).toBe("zone4");
+    expect(main?.detailKey).toBe("intervalsDetail");
+  });
+
+  it("returns null for rest", () => {
+    expect(buildWorkoutSegments("rest", null, 0)).toBeNull();
   });
 });

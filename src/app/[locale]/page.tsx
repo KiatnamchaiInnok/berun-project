@@ -3,7 +3,9 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { WorkoutSegmentBreakdown } from "@/components/plan/workout-segment-breakdown";
 import {
+  buildWorkoutSegments,
   computeHrZones,
   formatZoneDisplay,
   formatWorkoutDetailSummary,
@@ -19,6 +21,7 @@ import { TodayActions } from "./today-actions";
 export default async function TodayPage() {
   const t = await getTranslations("today");
   const tw = await getTranslations("workout");
+  const ts = await getTranslations("segment");
 
   let data;
   try {
@@ -62,11 +65,15 @@ export default async function TodayPage() {
         })
       : t("rpeGuide", { rpe: getRpeGuide(workoutType) });
 
-  const detailSummary = session
-    ? formatWorkoutDetailSummary(
-        workoutType,
-        (session.workoutDetail as WorkoutDetail | null) ?? null,
-      )
+  const workoutDetail = (session?.workoutDetail as WorkoutDetail | null) ?? null;
+  const detailSummary = session ? formatWorkoutDetailSummary(workoutType, workoutDetail) : null;
+  const detailSummaryText = detailSummary
+    ? ts(detailSummary.key as Parameters<typeof ts>[0], detailSummary.params)
+    : null;
+
+  const sessionMinutes = session ? Math.round(session.targetDurationSec / 60) : 0;
+  const segments = session
+    ? buildWorkoutSegments(workoutType, workoutDetail, sessionMinutes)
     : null;
 
   return (
@@ -110,14 +117,17 @@ export default async function TodayPage() {
             <>
               <CardTitle>{tw(session!.workoutType)}</CardTitle>
               <CardDescription>
-                {t("minutesTarget", { minutes: Math.round(session!.targetDurationSec / 60) })}
+                {t("minutesTarget", { minutes: sessionMinutes })}
                 {` · ${zoneLabel}`}
-                {detailSummary ? ` · ${detailSummary}` : ""}
+                {detailSummaryText ? ` · ${detailSummaryText}` : ""}
               </CardDescription>
             </>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
+          {!isRest && segments ? (
+            <WorkoutSegmentBreakdown segments={segments} hrZones={hrZones} />
+          ) : null}
           <TodayActions
             sessionId={session?.id}
             workoutType={session?.workoutType ?? "easy"}

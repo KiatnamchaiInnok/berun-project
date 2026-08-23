@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma, assertUserId } from "@/lib/db";
-import { ENGINE_VERSION, generatePlan, type PlanEngineInput } from "@/lib/engine/plan-engine";
+import { ENGINE_VERSION, generatePlan, tanakaHrMax, type PlanEngineInput } from "@/lib/engine/plan-engine";
 import type { Level, PlanVersionReason } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -79,6 +79,7 @@ export async function createPlanFromOnboarding(input: {
   currentLongRunMinutes: number;
   totalWeeks: 8 | 12;
   baselineMode?: boolean;
+  birthYear: number;
 }) {
   const userId = await requireUserId();
 
@@ -87,6 +88,9 @@ export async function createPlanFromOnboarding(input: {
     data: { status: "archived" },
   });
 
+  const age = new Date().getFullYear() - input.birthYear;
+  const hrMax = tanakaHrMax(age);
+
   const profile = await prisma.athleteProfile.upsert({
     where: { userId },
     create: {
@@ -94,6 +98,10 @@ export async function createPlanFromOnboarding(input: {
       level: input.level,
       availableWeekdays: input.availableWeekdays,
       baselineMode: input.baselineMode ?? false,
+      birthYear: input.birthYear,
+      hrMax,
+      hrMaxSource: "tanakaEstimate",
+      hrMaxUpdatedAt: new Date(),
       onboardingCompletedAt: new Date(),
       disclaimerAcceptedAt: new Date(),
       parqCompletedAt: new Date(),
@@ -102,6 +110,10 @@ export async function createPlanFromOnboarding(input: {
       level: input.level,
       availableWeekdays: input.availableWeekdays,
       baselineMode: input.baselineMode ?? false,
+      birthYear: input.birthYear,
+      hrMax,
+      hrMaxSource: "tanakaEstimate",
+      hrMaxUpdatedAt: new Date(),
       onboardingCompletedAt: new Date(),
     },
   });
@@ -292,6 +304,7 @@ export async function updateProfile(input: {
   availableWeekdays?: number[];
   hrMax?: number;
   birthYear?: number;
+  hrMaxSource?: "fieldTest" | "tanakaEstimate" | "manual";
   progressionRatePct?: number;
   buildWeeks?: number;
   locale?: "th" | "en";
@@ -301,11 +314,20 @@ export async function updateProfile(input: {
   const userId = await requireUserId();
   await prisma.athleteProfile.upsert({
     where: { userId },
-    create: { userId, ...input, locale: input.locale ?? "th" },
-    update: input,
+    create: {
+      userId,
+      ...input,
+      locale: input.locale ?? "th",
+      ...(input.hrMax != null ? { hrMaxUpdatedAt: new Date() } : {}),
+    },
+    update: {
+      ...input,
+      ...(input.hrMax != null ? { hrMaxUpdatedAt: new Date() } : {}),
+    },
   });
   revalidatePath("/settings");
   revalidatePath("/");
+  revalidatePath("/plan");
 }
 
 export async function reconcilePlan() {

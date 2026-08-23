@@ -2,7 +2,7 @@
 
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,8 @@ const WEEKDAYS = [
   { value: "6", label: "Sat" },
 ];
 
+const MIN_BIRTH_YEAR = 1930;
+
 export default function OnboardingPage() {
   const t = useTranslations("onboarding");
   const ts = useTranslations("settings");
@@ -29,8 +31,19 @@ export default function OnboardingPage() {
   const [level, setLevel] = useState<"beginner" | "returning" | "regular">("beginner");
   const [weekdays, setWeekdays] = useState<string[]>(["1", "3", "5"]);
   const [weeklyMinutes, setWeeklyMinutes] = useState("90");
+  const [birthYear, setBirthYear] = useState("");
   const [parqYes, setParqYes] = useState(false);
   const [accepted, setAccepted] = useState(false);
+
+  const maxBirthYear = new Date().getFullYear() - 10;
+
+  const birthYearValid = useMemo(() => {
+    if (birthYear.length !== 4) return false;
+    const year = Number(birthYear);
+    return Number.isInteger(year) && year >= MIN_BIRTH_YEAR && year <= maxBirthYear;
+  }, [birthYear, maxBirthYear]);
+
+  const canSubmit = accepted && !parqYes && birthYearValid && !pending;
 
   function submit(baselineMode: boolean) {
     startTransition(async () => {
@@ -42,6 +55,7 @@ export default function OnboardingPage() {
           currentLongRunMinutes: baselineMode ? 20 : Math.round(Number(weeklyMinutes) * 0.3),
           totalWeeks: 8,
           baselineMode,
+          birthYear: Number(birthYear),
         });
         router.push("/");
       } catch {
@@ -64,6 +78,19 @@ export default function OnboardingPage() {
           <CheckboxField id="parq" checked={parqYes} onCheckedChange={setParqYes}>
             {t("parq")}
           </CheckboxField>
+          <div>
+            <Label htmlFor="birthYear">{t("birthYear")}</Label>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("birthYearHint")}</p>
+            <Input
+              id="birthYear"
+              inputMode="numeric"
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder={String(maxBirthYear - 20)}
+              className="mt-2"
+              aria-invalid={birthYear.length > 0 && !birthYearValid}
+            />
+          </div>
           <div>
             <Label>{t("weeklyMinutes")}</Label>
             <Input inputMode="numeric" value={weeklyMinutes} onChange={(e) => setWeeklyMinutes(e.target.value)} />
@@ -110,10 +137,10 @@ export default function OnboardingPage() {
               ))}
             </ToggleChipGroup>
           </div>
-          <Button type="button" size="lg" disabled={!accepted || parqYes || pending} onClick={() => submit(false)}>
+          <Button type="button" size="lg" disabled={!canSubmit} onClick={() => submit(false)}>
             {t("createPlan")}
           </Button>
-          <Button type="button" variant="outline" disabled={!accepted || parqYes || pending} onClick={() => submit(true)}>
+          <Button type="button" variant="outline" disabled={!canSubmit} onClick={() => submit(true)}>
             {t("notSure")}
           </Button>
         </CardContent>

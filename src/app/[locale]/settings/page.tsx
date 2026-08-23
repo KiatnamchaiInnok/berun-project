@@ -26,6 +26,7 @@ export default async function SettingsPage() {
                 buildWeeks: profile.buildWeeks,
                 hrMax: profile.hrMax,
                 birthYear: profile.birthYear,
+                hrMaxSource: profile.hrMaxSource,
                 defaultLat: profile.defaultLat ? Number(profile.defaultLat) : null,
                 defaultLon: profile.defaultLon ? Number(profile.defaultLon) : null,
               }
