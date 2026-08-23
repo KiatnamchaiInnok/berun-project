@@ -45,7 +45,8 @@
     "note": "โน้ต",
     "moreDetails": "รายละเอียดเพิ่ม",
     "save": "บันทึก",
-    "saved": "บันทึกแล้ว"
+    "saved": "บันทึกแล้ว",
+    "close": "ปิด"
   },
   "plan": {
     "title": "แผนฝึก",
@@ -84,6 +85,9 @@
     "recoveryCycle": "รอบฟื้นตัว",
     "language": "ภาษา",
     "theme": "ธีม",
+    "themeLight": "สว่าง",
+    "themeDark": "มืด",
+    "themeSystem": "ตามระบบ",
     "location": "ตำแหน่งสำหรับอากาศ",
     "glossary": "อธิบายศัพท์",
     "save": "บันทึก"

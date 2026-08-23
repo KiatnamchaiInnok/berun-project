@@ -1,4 +1,5 @@
 import { Inter, Noto_Sans_Thai } from "next/font/google";
+import type { Viewport } from "next";
 import { cookies } from "next/headers";
 import { routing } from "@/i18n/routing";
 import "./globals.css";
@@ -13,6 +14,12 @@ const notoSansThai = Noto_Sans_Thai({
   weight: ["400", "500", "600", "700"],
   variable: "--font-noto-thai",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();

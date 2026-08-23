@@ -17,8 +17,8 @@ export function BottomNav({ onLogClick }: { onLogClick: () => void }) {
   ];
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2 pb-safe pt-2">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-safe backdrop-blur lg:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2 pb-safe pt-2 md:max-w-2xl">
         {tabs.slice(0, 2).map((tab) => (
           <NavItem key={tab.href} {...tab} active={pathname === tab.href} />
         ))}

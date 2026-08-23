@@ -1,4 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
+import { format } from "date-fns";
+import { enUS, th } from "date-fns/locale";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -37,4 +39,11 @@ export function kmToMeters(km: number): number {
 
 export function metersToKm(m: number): number {
   return m / 1000;
+}
+
+export function formatShortDate(date: Date | string, locale: string): string {
+  const value = typeof date === "string" ? new Date(date) : date;
+  const dateLocale = locale === "th" ? th : enUS;
+  const pattern = locale === "th" ? "EEE d MMM" : "EEE MMM d";
+  return format(value, pattern, { locale: dateLocale });
 }

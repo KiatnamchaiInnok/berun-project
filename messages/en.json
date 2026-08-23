@@ -45,7 +45,8 @@
     "note": "Note",
     "moreDetails": "More details",
     "save": "Save",
-    "saved": "Saved"
+    "saved": "Saved",
+    "close": "Close"
   },
   "plan": {
     "title": "Training plan",
@@ -84,6 +85,9 @@
     "recoveryCycle": "Recovery cycle",
     "language": "Language",
     "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
     "location": "Weather location",
     "glossary": "Glossary",
     "save": "Save"

@@ -1,9 +1,10 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { formatShortDate } from "@/lib/utils";
 
 export function ProgressCharts({
   weekly,
@@ -15,10 +16,12 @@ export function ProgressCharts({
   benchmarks: Array<{ performedOn: Date; efficiencyFactor: { toString(): string } | null }>;
 }) {
   const t = useTranslations("progress");
+  const locale = useLocale();
   const acwrDaysRemaining = Math.max(0, 28 - daysLogged);
+  const formatAxisDate = (value: string) => formatShortDate(value, locale);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t("weeklyMinutes")}</CardTitle>
@@ -29,7 +32,7 @@ export function ProgressCharts({
               <BarChart data={weekly}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="week" hide />
-                <YAxis />
+                <YAxis width={32} tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Bar dataKey="minutes" fill="var(--primary)" radius={[8, 8, 0, 0]} />
               </BarChart>
@@ -75,8 +78,8 @@ export function ProgressCharts({
                 }))}
               >
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="date" />
-                <YAxis />
+                <XAxis dataKey="date" tickFormatter={formatAxisDate} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+                <YAxis width={32} tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Line type="monotone" dataKey="ef" stroke="var(--primary)" strokeWidth={2} dot />
               </LineChart>

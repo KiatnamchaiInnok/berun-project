@@ -36,8 +36,8 @@ export default async function TodayPage() {
   const weekPct = targetMinutes ? Math.min(100, Math.round((data.weekMinutes / targetMinutes) * 100)) : 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
+    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+      <div className="lg:col-span-2">
         <p className="text-sm text-muted-foreground leading-relaxed">
           {t("weekOf", { current: weekIndex, total: totalWeeks })} · {t("phaseBase")}
         </p>
@@ -45,7 +45,7 @@ export default async function TodayPage() {
       </div>
 
       {data.latestAdjustment ? (
-        <Card className="border-primary/30 bg-accent/40">
+        <Card className="border-primary/30 bg-accent/40 lg:col-span-2">
           <CardContent className="flex items-center gap-3 p-4">
             <AlertCircle className="h-5 w-5 text-primary" />
             <div className="flex-1 leading-relaxed">
@@ -57,7 +57,7 @@ export default async function TodayPage() {
       ) : null}
 
       {weather.advisory.level !== "ok" ? (
-        <Card className="border-amber-500/40 bg-amber-500/10">
+        <Card className="border-amber-500/40 bg-amber-500/10 lg:col-span-2">
           <CardContent className="flex items-center gap-3 p-4">
             <Sun className="h-5 w-5 text-amber-600" />
             <p className="text-sm leading-relaxed">{weather.advisory.messageKey}</p>
@@ -65,7 +65,7 @@ export default async function TodayPage() {
         </Card>
       ) : null}
 
-      <Card>
+      <Card className="lg:col-span-2">
         <CardHeader>
           {isRest ? (
             <>

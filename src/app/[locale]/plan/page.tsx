@@ -7,9 +7,12 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { reconcilePlan } from "@/lib/actions/training";
+import { formatShortDate } from "@/lib/utils";
 
 export default async function PlanPage() {
   const t = await getTranslations("plan");
+  const tw = await getTranslations("workout");
+  const locale = await getLocale();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect({ href: "/login", locale: await getLocale() });
@@ -34,8 +37,8 @@ export default async function PlanPage() {
   const today = new Date();
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+      <div className="flex items-center justify-between gap-3 lg:col-span-2">
         <h1 className="text-2xl font-semibold leading-relaxed">{t("title")}</h1>
         <form
           action={async () => {
@@ -49,7 +52,7 @@ export default async function PlanPage() {
         </form>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="grid gap-4 lg:col-span-2 lg:grid-cols-2">
         {weeks.map((week) => {
           const end = new Date(week.weekStartDate);
           end.setDate(end.getDate() + 6);
@@ -80,11 +83,11 @@ export default async function PlanPage() {
                   {week.sessions.map((s) => (
                     <li
                       key={s.id}
-                      className="flex items-center justify-between rounded-xl border border-border px-3 py-2 text-sm leading-relaxed"
+                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-border px-3 py-2 text-sm leading-relaxed"
                     >
-                      <span>{s.scheduledDate.toISOString().slice(0, 10)}</span>
+                      <span>{formatShortDate(s.scheduledDate, locale)}</span>
                       <span className="tabular-nums">
-                        {s.workoutType} · {Math.round(s.targetDurationSec / 60)}m
+                        {tw(s.workoutType)} · {Math.round(s.targetDurationSec / 60)}m
                       </span>
                     </li>
                   ))}

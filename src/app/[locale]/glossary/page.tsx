@@ -5,8 +5,8 @@ export default async function GlossaryPage() {
   const t = await getTranslations("glossary");
 
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-semibold leading-relaxed">{t("title")}</h1>
+    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+      <h1 className="text-2xl font-semibold leading-relaxed lg:col-span-2">{t("title")}</h1>
       <Card>
         <CardHeader>
           <CardTitle className="text-base">RPE</CardTitle>

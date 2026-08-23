@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@utility pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+@utility px-safe {
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+}
+
 :root {
   --background: #fafaf9;
   --foreground: #1c1917;
@@ -21,7 +29,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --background: #0c0a09;
     --foreground: #fafaf9;
     --card: #1c1917;
@@ -41,6 +49,28 @@
     --ring: #22c55e;
   }
 }
+
+.dark {
+  --background: #0c0a09;
+  --foreground: #fafaf9;
+  --card: #1c1917;
+  --card-foreground: #fafaf9;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --secondary: #14532d;
+  --secondary-foreground: #dcfce7;
+  --muted: #292524;
+  --muted-foreground: #a8a29e;
+  --accent: #14532d;
+  --accent-foreground: #dcfce7;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --border: #292524;
+  --input: #292524;
+  --ring: #22c55e;
+}
+
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);

@@ -12,8 +12,8 @@ export default async function ProgressPage() {
   const data = await getProgressData();
 
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-semibold leading-relaxed">{t("title")}</h1>
+    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+      <h1 className="text-2xl font-semibold leading-relaxed lg:col-span-2">{t("title")}</h1>
       <ProgressCharts weekly={data.weekly} daysLogged={data.daysLogged} benchmarks={data.benchmarks} />
     </div>
   );
