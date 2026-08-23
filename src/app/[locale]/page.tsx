@@ -116,7 +116,7 @@ export default async function TodayPage() {
           ) : (
             <>
               <CardTitle>{tw(session!.workoutType)}</CardTitle>
-              <CardDescription>
+              <CardDescription className="truncate">
                 {t("minutesTarget", { minutes: sessionMinutes })}
                 {` · ${zoneLabel}`}
                 {detailSummaryText ? ` · ${detailSummaryText}` : ""}

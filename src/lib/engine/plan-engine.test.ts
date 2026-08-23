@@ -337,6 +337,19 @@ describe("buildWorkoutSegments", () => {
     expect(main?.detailKey).toBe("intervalsDetail");
   });
 
+  it("splits strides into easy, work, and rest segments", () => {
+    const result = buildWorkoutSegments(
+      "strides",
+      { count: 6, durationSec: 25, restSec: 60 },
+      58,
+    );
+    expect(result!.segments.some((s) => s.type === "rest")).toBe(true);
+    expect(result!.segments.some((s) => s.labelKey === "strides")).toBe(true);
+    expect(result!.segments.filter((s) => s.type === "main")).toHaveLength(2);
+    const sum = result!.segments.reduce((acc, s) => acc + s.durationMin, 0);
+    expect(sum).toBe(58);
+  });
+
   it("returns null for rest", () => {
     expect(buildWorkoutSegments("rest", null, 0)).toBeNull();
   });

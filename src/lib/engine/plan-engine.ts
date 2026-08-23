@@ -788,21 +788,20 @@ export function buildWorkoutSegments(
       const warmup = 10;
       const cooldown = 5;
       const strides = detail && isStridesDetail(detail) ? detail : buildStridesDetail();
+      const strideWorkMin = Math.max(1, Math.ceil((strides.count * strides.durationSec) / 60));
+      const restMin = Math.max(1, Math.ceil((strides.count * strides.restSec) / 60));
+      const easyMin = Math.max(1, total - warmup - cooldown - strideWorkMin - restMin);
       segments.push(
         segment("warmup", warmup, "zone2", "3-4", "warmup"),
-        segment(
-          "main",
-          total - warmup - cooldown,
-          "zone2",
-          getRpeGuide(workoutType),
-          "main",
-          "stridesDetail",
-          {
-            count: strides.count,
-            duration: strides.durationSec,
-            rest: strides.restSec,
-          },
-        ),
+        segment("main", easyMin, "zone2", "3-4", "main"),
+        segment("main", strideWorkMin, "zone4", "7-8", "strides", "stridesWork", {
+          count: strides.count,
+          duration: strides.durationSec,
+        }),
+        segment("rest", restMin, "zone1", "2-3", "rest", "stridesRest", {
+          count: strides.count,
+          rest: strides.restSec,
+        }),
         segment("cooldown", cooldown, "zone1", "2-3", "cooldown"),
       );
       break;
@@ -909,8 +908,8 @@ export function formatWorkoutDetailSummary(
 
   if (workoutType === "strides" && isStridesDetail(detail)) {
     return {
-      key: "stridesDetail",
-      params: { count: detail.count, duration: detail.durationSec, rest: detail.restSec },
+      key: "stridesWork",
+      params: { count: detail.count, duration: detail.durationSec },
     };
   }
   if (workoutType === "fartlek" && isFartlekDetail(detail)) {

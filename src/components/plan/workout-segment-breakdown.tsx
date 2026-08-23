@@ -10,6 +10,15 @@ import {
 } from "@/lib/engine/plan-engine";
 import { cn } from "@/lib/utils";
 
+type SegmentDetailKey =
+  | "stridesDetail"
+  | "stridesWork"
+  | "stridesRest"
+  | "intervalsDetail"
+  | "tempoDetail"
+  | "fartlekDetail"
+  | "activationStrides";
+
 export function WorkoutSegmentBreakdown({
   segments,
   hrZones,
@@ -31,17 +40,17 @@ export function WorkoutSegmentBreakdown({
       >
         {segments.segments.map((seg, i) => (
           <div
-            key={`${seg.type}-${i}`}
+            key={`${seg.type}-${seg.labelKey}-${i}`}
             className={cn(zoneColorClass(seg.zone), "min-w-[4px] transition-all")}
             style={{ width: `${(seg.durationMin / total) * 100}%` }}
-            title={t(seg.labelKey)}
+            title={t(seg.labelKey as "warmup")}
           />
         ))}
       </div>
 
       <ul className="flex flex-col gap-2">
         {segments.segments.map((seg, i) => (
-          <SegmentRow key={`${seg.type}-${i}`} segment={seg} hrZones={hrZones} />
+          <SegmentRow key={`${seg.type}-${seg.labelKey}-${i}`} segment={seg} hrZones={hrZones} />
         ))}
       </ul>
     </div>
@@ -67,7 +76,7 @@ function SegmentRow({
 
   const detailText =
     seg.detailKey && seg.detailParams
-      ? t(seg.detailKey as "stridesDetail" | "intervalsDetail" | "tempoDetail" | "fartlekDetail" | "activationStrides", seg.detailParams)
+      ? t(seg.detailKey as SegmentDetailKey, seg.detailParams)
       : null;
 
   return (
@@ -78,7 +87,7 @@ function SegmentRow({
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
         <div className="min-w-0">
-          <span className="font-medium">{t(seg.labelKey)}</span>
+          <span className="font-medium">{t(seg.labelKey as "warmup")}</span>
           {detailText ? (
             <span className="text-muted-foreground"> · {detailText}</span>
           ) : null}

@@ -26,11 +26,11 @@ export function SessionDetail({
   const canExpand = segments != null && segments.segments.length > 0;
 
   return (
-    <div className="rounded-xl border border-border text-sm leading-relaxed">
+    <div className="min-w-0 rounded-xl border border-border text-sm leading-relaxed">
       <button
         type="button"
         className={cn(
-          "flex w-full flex-col gap-1 px-3 py-2 text-left",
+          "flex w-full min-w-0 flex-col gap-1 px-3 py-2 text-left",
           canExpand && "min-h-12 cursor-pointer hover:bg-accent/50",
           !canExpand && "cursor-default",
         )}
@@ -38,8 +38,8 @@ export function SessionDetail({
         aria-expanded={canExpand ? expanded : undefined}
         disabled={!canExpand}
       >
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          {header}
+        <div className="flex min-w-0 items-center justify-between gap-x-3">
+          <div className="min-w-0 flex-1">{header}</div>
           {canExpand ? (
             <ChevronDown
               className={cn(
@@ -51,7 +51,7 @@ export function SessionDetail({
           ) : null}
         </div>
         {subheader ? (
-          <p className="text-xs text-muted-foreground">{subheader}</p>
+          <p className="min-w-0 truncate text-xs text-muted-foreground">{subheader}</p>
         ) : null}
       </button>
 
