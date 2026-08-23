@@ -49,7 +49,7 @@ pnpm db:seed
 pnpm dev
 ```
 
-Open [http://localhost:3000/th](http://localhost:3000/th)
+Open [http://localhost:3000](http://localhost:3000)
 
 ## Scripts
 

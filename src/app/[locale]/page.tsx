@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle2, Sun } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -7,8 +7,7 @@ import { getTodayDashboard } from "@/lib/actions/training";
 import { getWeatherObservation } from "@/lib/services/weather";
 import { TodayActions } from "./today-actions";
 
-export default async function TodayPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
+export default async function TodayPage() {
   const t = await getTranslations("today");
   const tw = await getTranslations("workout");
 
@@ -16,12 +15,12 @@ export default async function TodayPage({ params }: { params: Promise<{ locale: 
   try {
     data = await getTodayDashboard();
   } catch {
-    redirect({ href: "/login", locale });
+    redirect({ href: "/login", locale: await getLocale() });
     return null;
   }
 
   if (data.needsOnboarding) {
-    redirect({ href: "/onboarding", locale });
+    redirect({ href: "/onboarding", locale: await getLocale() });
     return null;
   }
 

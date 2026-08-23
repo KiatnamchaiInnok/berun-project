@@ -1,4 +1,6 @@
 import { Inter, Noto_Sans_Thai } from "next/font/google";
+import { cookies } from "next/headers";
+import { routing } from "@/i18n/routing";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,9 +14,16 @@ const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value;
+  const locale =
+    cookieLocale && routing.locales.includes(cookieLocale as (typeof routing.locales)[number])
+      ? cookieLocale
+      : routing.defaultLocale;
+
   return (
-    <html lang="th" suppressHydrationWarning className={`${inter.variable} ${notoSansThai.variable} h-full`}>
+    <html lang={locale} suppressHydrationWarning className={`${inter.variable} ${notoSansThai.variable} h-full`}>
       <body className="min-h-full flex flex-col font-[family-name:var(--font-app)] antialiased">{children}</body>
     </html>
   );

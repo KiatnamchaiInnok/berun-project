@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { CheckCircle2 } from "lucide-react";
 import { redirect } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,11 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { reconcilePlan } from "@/lib/actions/training";
 
-export default async function PlanPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
+export default async function PlanPage() {
   const t = await getTranslations("plan");
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) redirect({ href: "/login", locale });
+  if (!userId) redirect({ href: "/login", locale: await getLocale() });
 
   const plan = await prisma.trainingPlan.findFirst({
     where: { userId, status: "active" },

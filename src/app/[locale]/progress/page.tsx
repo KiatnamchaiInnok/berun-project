@@ -1,14 +1,13 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { ProgressCharts } from "@/components/progress/progress-charts";
 import { getProgressData } from "@/lib/actions/training";
 import { auth } from "@/auth";
 
-export default async function ProgressPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
+export default async function ProgressPage() {
   const t = await getTranslations("progress");
   const session = await auth();
-  if (!session?.user?.id) redirect({ href: "/login", locale });
+  if (!session?.user?.id) redirect({ href: "/login", locale: await getLocale() });
 
   const data = await getProgressData();
 
