@@ -350,7 +350,7 @@ export async function reconcilePlan() {
       triggeredAt: new Date(),
       input: {},
       outcome: { message: "Preview only in MVP" },
-      messageKey: "plan.reconcile",
+      messageKey: "plan.reconcileDone",
     },
   });
 

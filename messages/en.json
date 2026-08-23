@@ -61,7 +61,9 @@
     "preview": "Preview changes",
     "confirm": "Confirm update",
     "phaseBase": "Base",
-    "phaseBuild": "Build"
+    "phaseBuild": "Build",
+    "noDoubleProgression": "Quality workout added — volume held this week",
+    "reconcileDone": "Plan updated from your recent runs"
   },
   "progress": {
     "title": "Progress",
@@ -120,7 +122,8 @@
   "heat": {
     "effortOnly": "Very humid — run by feel, not pace",
     "caution": "Hot conditions — ease effort",
-    "mild": "Slightly humid"
+    "mild": "Slightly humid",
+    "ok": "Conditions look good for running"
   },
   "workout": {
     "easy": "Easy",
@@ -156,5 +159,16 @@
     "tempoDetail": "{minutes} min steady",
     "fartlekDetail": "{repeats}x {fast}s fast / {easy}s easy",
     "activationStrides": "{count} strides"
+  },
+  "pain": {
+    "deload": "Repeated pain reported — plan reduced and quality sessions paused",
+    "stop": "High pain reported — stop running and seek advice",
+    "none": "No pain adjustments"
+  },
+  "detrain": {
+    "rebaseline": "Long break detected — restart with baseline mode",
+    "severe": "2+ weeks off — load reduced significantly",
+    "mild": "About a week off — load reduced slightly",
+    "none": "No detraining adjustment"
   }
 }

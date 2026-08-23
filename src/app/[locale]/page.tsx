@@ -15,6 +15,7 @@ import {
   type WorkoutType,
 } from "@/lib/engine/plan-engine";
 import { getTodayDashboard } from "@/lib/actions/training";
+import { translateMessageKey } from "@/lib/i18n/translate-message-key";
 import { getWeatherObservation } from "@/lib/services/weather";
 import { TodayActions } from "./today-actions";
 
@@ -76,6 +77,14 @@ export default async function TodayPage() {
     ? buildWorkoutSegments(workoutType, workoutDetail, sessionMinutes)
     : null;
 
+  const adjustmentMessage = data.latestAdjustment
+    ? await translateMessageKey(data.latestAdjustment.messageKey)
+    : null;
+  const weatherMessage =
+    weather.advisory.level !== "ok"
+      ? await translateMessageKey(weather.advisory.messageKey)
+      : null;
+
   return (
     <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       <div className="lg:col-span-2">
@@ -91,7 +100,7 @@ export default async function TodayPage() {
             <AlertCircle className="h-5 w-5 text-primary" />
             <div className="flex-1 leading-relaxed">
               <p className="font-medium">{t("planAdjusted")}</p>
-              <p className="text-sm text-muted-foreground">{data.latestAdjustment.messageKey}</p>
+              <p className="text-sm text-muted-foreground">{adjustmentMessage}</p>
             </div>
           </CardContent>
         </Card>
@@ -101,7 +110,7 @@ export default async function TodayPage() {
         <Card className="border-amber-500/40 bg-amber-500/10 lg:col-span-2">
           <CardContent className="flex items-center gap-3 p-4">
             <Sun className="h-5 w-5 text-amber-600" />
-            <p className="text-sm leading-relaxed">{weather.advisory.messageKey}</p>
+            <p className="text-sm leading-relaxed">{weatherMessage}</p>
           </CardContent>
         </Card>
       ) : null}
