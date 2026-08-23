@@ -78,7 +78,8 @@
     "levelBeginner": "เริ่มต้น",
     "levelReturning": "กลับมาวิ่ง",
     "levelRegular": "วิ่งประจำ",
-    "weekdays": "วันว่าง",
+    "weekdays": "วันที่จะวิ่ง",
+    "weekdaysHint": "เลือกวันที่สะดวกวิ่ง · วันที่ไม่ได้เลือกจะเป็นวันพัก",
     "hrMax": "HR สูงสุด",
     "hrMaxEstimate": "คำนวณจากอายุ (ประมาณ)",
     "progression": "อัตราเพิ่มโหลด",
@@ -90,7 +91,9 @@
     "themeSystem": "ตามระบบ",
     "location": "ตำแหน่งสำหรับอากาศ",
     "glossary": "อธิบายศัพท์",
-    "save": "บันทึก"
+    "save": "บันทึก",
+    "account": "บัญชี",
+    "logout": "ออกจากระบบ"
   },
   "onboarding": {
     "title": "เริ่มต้นใช้งาน",
@@ -98,7 +101,8 @@
     "parq": "คุณมีข้อจำกัดด้านสุขภาพที่แพทย์เตือนไว้หรือไม่?",
     "weeklyMinutes": "ช่วงนี้วิ่งประมาณกี่นาทีต่อสัปดาห์?",
     "notSure": "ไม่แน่ใจ — เก็บ baseline 2 สัปดาห์",
-    "createPlan": "สร้างแผน"
+    "createPlan": "สร้างแผน",
+    "weekdaysSummary": "{runDays} วันวิ่ง · {restDays} วันพัก"
   },
   "login": {
     "title": "เข้าสู่ระบบ",

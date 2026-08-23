@@ -3,6 +3,7 @@ import { redirect } from "@/i18n/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { SignOutButton } from "@/components/settings/sign-out-button";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SettingsForm } from "./settings-form";
@@ -32,6 +33,14 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <LanguageSwitcher />
+        </CardContent>
+      </Card>
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle>{t("account")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SignOutButton />
         </CardContent>
       </Card>
       <SettingsForm

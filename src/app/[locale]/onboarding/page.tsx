@@ -70,6 +70,7 @@ export default function OnboardingPage() {
           </div>
           <div>
             <Label>{ts("weekdays")}</Label>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{ts("weekdaysHint")}</p>
             <ToggleChipGroup
               type="multiple"
               value={weekdays}
@@ -83,6 +84,9 @@ export default function OnboardingPage() {
                 </ToggleChipItem>
               ))}
             </ToggleChipGroup>
+            <p className="mt-2 text-sm tabular-nums leading-relaxed text-muted-foreground">
+              {t("weekdaysSummary", { runDays: weekdays.length, restDays: 7 - weekdays.length })}
+            </p>
           </div>
           <div>
             <Label>{ts("level")}</Label>

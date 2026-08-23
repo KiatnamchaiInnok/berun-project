@@ -15,12 +15,15 @@ export function LocaleSync() {
     const stored = getStoredLocale();
     if (stored && stored !== locale) {
       router.replace(pathname, { locale: stored });
+      router.refresh();
       return;
     }
     if (isLocale(locale)) {
       setStoredLocale(locale);
     }
-  }, [locale, pathname, router]);
+    // Restore persisted locale once on mount only; LanguageSwitcher handles later changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only sync
+  }, []);
 
   return null;
 }

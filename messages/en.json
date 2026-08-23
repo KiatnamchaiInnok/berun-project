@@ -78,7 +78,8 @@
     "levelBeginner": "Beginner",
     "levelReturning": "Returning",
     "levelRegular": "Regular",
-    "weekdays": "Available days",
+    "weekdays": "Running days",
+    "weekdaysHint": "Pick the days you can run · unselected days are rest days",
     "hrMax": "HR max",
     "hrMaxEstimate": "Estimate from age",
     "progression": "Progression rate",
@@ -90,7 +91,9 @@
     "themeSystem": "System",
     "location": "Weather location",
     "glossary": "Glossary",
-    "save": "Save"
+    "save": "Save",
+    "account": "Account",
+    "logout": "Sign out"
   },
   "onboarding": {
     "title": "Get started",
@@ -98,7 +101,8 @@
     "parq": "Do you have health limitations advised by a doctor?",
     "weeklyMinutes": "About how many minutes do you run per week?",
     "notSure": "Not sure — 2-week baseline mode",
-    "createPlan": "Create plan"
+    "createPlan": "Create plan",
+    "weekdaysSummary": "{runDays} run days · {restDays} rest days"
   },
   "login": {
     "title": "Sign in",
