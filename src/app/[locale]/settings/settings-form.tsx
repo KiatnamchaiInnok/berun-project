@@ -4,9 +4,16 @@ import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { ThemeToggle } from "@/components/settings/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  SettingsRow,
+  SettingsSection,
+  SettingsSeparator,
+} from "@/components/ui/settings-row";
 import { updateProfile } from "@/lib/actions/training";
 
 export function SettingsForm({
@@ -27,45 +34,86 @@ export function SettingsForm({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t("profile")}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div>
-          <Label htmlFor="hrMax">{t("hrMax")}</Label>
-          <Input id="hrMax" name="hrMax" defaultValue={profile?.hrMax ?? ""} inputMode="numeric" />
-        </div>
-        <div>
-          <Label htmlFor="birthYear">Birth year</Label>
-          <Input id="birthYear" name="birthYear" defaultValue={profile?.birthYear ?? ""} inputMode="numeric" />
-        </div>
-        <div>
-          <Label htmlFor="progression">{t("progression")} (%)</Label>
-          <Input id="progression" name="progression" defaultValue={profile?.progressionRatePct ?? 10} inputMode="numeric" />
-        </div>
-        <Button
-          type="button"
-          disabled={pending}
-          onClick={() => {
-            startTransition(async () => {
-              try {
-                await updateProfile({
-                  hrMax: profile?.hrMax ?? undefined,
-                  progressionRatePct: profile?.progressionRatePct,
-                  buildWeeks: profile?.buildWeeks,
-                });
-                toast.success(t("save"));
-              } catch {
-                toast.error("Error");
-              }
-            });
-          }}
+      <CardContent className="p-0 pt-5">
+        <SettingsSection title={t("profile")} />
+
+        <SettingsRow label={t("hrMax")} htmlFor="hrMax">
+          <Input
+            id="hrMax"
+            name="hrMax"
+            defaultValue={profile?.hrMax ?? ""}
+            inputMode="numeric"
+            className="ml-auto h-9 w-28 text-right text-sm"
+          />
+        </SettingsRow>
+
+        <SettingsRow label={t("birthYear")} htmlFor="birthYear">
+          <Input
+            id="birthYear"
+            name="birthYear"
+            defaultValue={profile?.birthYear ?? ""}
+            inputMode="numeric"
+            className="ml-auto h-9 w-28 text-right text-sm"
+          />
+        </SettingsRow>
+
+        <SettingsRow label={`${t("progression")} (%)`} htmlFor="progression">
+          <Input
+            id="progression"
+            name="progression"
+            defaultValue={profile?.progressionRatePct ?? 10}
+            inputMode="numeric"
+            className="ml-auto h-9 w-28 text-right text-sm tabular-nums"
+          />
+        </SettingsRow>
+
+        <SettingsSeparator className="my-2" />
+
+        <SettingsSection title={t("preferences")} />
+
+        <SettingsRow label={t("theme")}>
+          <ThemeToggle />
+        </SettingsRow>
+
+        <SettingsRow label={t("language")}>
+          <LanguageSwitcher />
+        </SettingsRow>
+
+        <SettingsSeparator className="my-2" />
+
+        <Link
+          href="/glossary"
+          className="flex min-h-12 items-center justify-between gap-4 px-5 py-2 text-sm leading-relaxed hover:bg-accent/50"
         >
-          {t("save")}
-        </Button>
-        <Link href="/glossary" className="text-sm text-primary leading-relaxed">
-          {t("glossary")}
+          <span>{t("glossary")}</span>
+          <span className="text-muted-foreground" aria-hidden>
+            ›
+          </span>
         </Link>
+
+        <div className="px-5 pb-5 pt-3">
+          <Button
+            type="button"
+            disabled={pending}
+            className="w-full"
+            onClick={() => {
+              startTransition(async () => {
+                try {
+                  await updateProfile({
+                    hrMax: profile?.hrMax ?? undefined,
+                    progressionRatePct: profile?.progressionRatePct,
+                    buildWeeks: profile?.buildWeeks,
+                  });
+                  toast.success(t("save"));
+                } catch {
+                  toast.error("Error");
+                }
+              });
+            }}
+          >
+            {t("save")}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

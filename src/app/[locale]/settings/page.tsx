@@ -2,10 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { SignOutButton } from "@/components/settings/sign-out-button";
-import { ThemeToggle } from "@/components/settings/theme-toggle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SettingsForm } from "./settings-form";
 
 export default async function SettingsPage() {
@@ -17,32 +14,9 @@ export default async function SettingsPage() {
   const profile = await prisma.athleteProfile.findUnique({ where: { userId } });
 
   return (
-    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-      <h1 className="text-2xl font-semibold leading-relaxed lg:col-span-2">{t("title")}</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("theme")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ThemeToggle />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("language")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <LanguageSwitcher />
-        </CardContent>
-      </Card>
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>{t("account")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SignOutButton />
-        </CardContent>
-      </Card>
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6 lg:max-w-lg">
+      <h1 className="text-2xl font-semibold leading-relaxed">{t("title")}</h1>
+
       <SettingsForm
         profile={
           profile
@@ -58,6 +32,8 @@ export default async function SettingsPage() {
             : null
         }
       />
+
+      <SignOutButton />
     </div>
   );
 }

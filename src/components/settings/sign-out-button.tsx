@@ -7,12 +7,13 @@ export async function SignOutButton() {
 
   return (
     <form
+      className="flex justify-center"
       action={async () => {
         "use server";
         await signOut({ redirectTo: "/login" });
       }}
     >
-      <Button type="submit" variant="outline" className="min-h-12 w-full">
+      <Button type="submit" variant="ghost" className="text-destructive hover:text-destructive">
         {t("logout")}
       </Button>
     </form>

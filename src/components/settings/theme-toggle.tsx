@@ -3,7 +3,13 @@
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { useSyncExternalStore } from "react";
-import { ToggleChipGroup, ToggleChipItem } from "@/components/ui/toggle-chip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function useMounted() {
   return useSyncExternalStore(
@@ -19,21 +25,19 @@ export function ThemeToggle() {
   const mounted = useMounted();
 
   if (!mounted) {
-    return <div className="h-12" aria-hidden />;
+    return <div className="h-9 w-28" aria-hidden />;
   }
 
   return (
-    <ToggleChipGroup
-      type="single"
-      value={theme ?? "system"}
-      onValueChange={(value) => {
-        if (value) setTheme(value);
-      }}
-      aria-label={t("theme")}
-    >
-      <ToggleChipItem value="light">{t("themeLight")}</ToggleChipItem>
-      <ToggleChipItem value="dark">{t("themeDark")}</ToggleChipItem>
-      <ToggleChipItem value="system">{t("themeSystem")}</ToggleChipItem>
-    </ToggleChipGroup>
+    <Select value={theme ?? "system"} onValueChange={setTheme}>
+      <SelectTrigger className="ml-auto w-auto min-w-28" aria-label={t("theme")}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="light">{t("themeLight")}</SelectItem>
+        <SelectItem value="dark">{t("themeDark")}</SelectItem>
+        <SelectItem value="system">{t("themeSystem")}</SelectItem>
+      </SelectContent>
+    </Select>
   );
 }
