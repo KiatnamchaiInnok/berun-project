@@ -13,6 +13,9 @@
   "today": {
     "weekOf": "สัปดาห์ {current} จาก {total}",
     "phaseBase": "ช่วงสร้างฐาน",
+    "phaseBuild": "ช่วงเพิ่มความเข้ม",
+    "zoneRange": "โซน {zone} ({range})",
+    "rpeGuide": "RPE {rpe}",
     "restDay": "วันนี้พัก",
     "restReason": "ร่างกายต้องการฟื้นตัวตามแผน",
     "logRun": "บันทึกการวิ่ง",
@@ -56,7 +59,9 @@
     "targetMinutes": "เป้า {minutes} นาที",
     "reconcile": "อัปเดตแผนจากของจริง",
     "preview": "ดูตัวอย่างก่อนยืนยัน",
-    "confirm": "ยืนยันอัปเดต"
+    "confirm": "ยืนยันอัปเดต",
+    "phaseBase": "สร้างฐาน",
+    "phaseBuild": "เพิ่มความเข้ม"
   },
   "progress": {
     "title": "ความก้าวหน้า",
@@ -120,7 +125,10 @@
     "long": "วิ่งยาว",
     "tempo": "เทมโป",
     "runWalk": "วิ่ง-เดิน",
-    "rest": "พัก"
+    "rest": "พัก",
+    "strides": "สไตรด์",
+    "fartlek": "ฟาร์ทเลค",
+    "intervals": "อินเทอร์วอล"
   },
   "glossary": {
     "title": "อธิบายศัพท์",

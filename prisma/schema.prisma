@@ -18,6 +18,14 @@ enum WorkoutType {
   tempo
   runWalk
   rest
+  strides
+  fartlek
+  intervals
+}
+
+enum TrainingPhase {
+  base
+  build
 }
 
 enum Level {
@@ -254,8 +262,9 @@ model PlanWeek {
   weekIndex             Int      @map("week_index")
   blockIndex            Int      @map("block_index")
   weekStartDate         DateTime @map("week_start_date") @db.Date
-  isRecoveryWeek        Boolean  @default(false) @map("is_recovery_week")
-  targetMinutes         Int      @map("target_minutes")
+  isRecoveryWeek        Boolean       @default(false) @map("is_recovery_week")
+  phase                 TrainingPhase @default(base)
+  targetMinutes         Int           @map("target_minutes")
   targetLongRunMinutes  Int      @map("target_long_run_minutes")
   targetEasySharePct    Int      @default(80) @map("target_easy_share_pct")
   targetDistanceM       Int?     @map("target_distance_m")
@@ -281,6 +290,7 @@ model PlannedSession {
   targetDistanceM    Int?           @map("target_distance_m")
   targetZone         IntensityZone? @map("target_zone")
   runWalkPattern     Json?          @map("run_walk_pattern")
+  workoutDetail      Json?          @map("workout_detail")
   status             SessionStatus  @default(planned)
   createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)

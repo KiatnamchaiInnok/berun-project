@@ -3,6 +3,15 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import {
+  computeHrZones,
+  formatZoneDisplay,
+  formatWorkoutDetailSummary,
+  getRpeGuide,
+  type IntensityZone,
+  type WorkoutDetail,
+  type WorkoutType,
+} from "@/lib/engine/plan-engine";
 import { getTodayDashboard } from "@/lib/actions/training";
 import { getWeatherObservation } from "@/lib/services/weather";
 import { TodayActions } from "./today-actions";
@@ -34,12 +43,37 @@ export default async function TodayPage() {
   const totalWeeks = data.plan?.totalWeeks ?? 8;
   const targetMinutes = data.currentWeek?.targetMinutes ?? 0;
   const weekPct = targetMinutes ? Math.min(100, Math.round((data.weekMinutes / targetMinutes) * 100)) : 0;
+  const phase = data.currentWeek?.phase ?? "base";
+  const phaseLabel = phase === "build" ? t("phaseBuild") : t("phaseBase");
+
+  const hrZones = computeHrZones(
+    data.profile?.hrMax ?? 0,
+    data.profile?.restingHr,
+  );
+
+  const workoutType = (session?.workoutType ?? "easy") as WorkoutType;
+  const targetZone = (session?.targetZone ?? null) as IntensityZone | null;
+  const zoneDisplay = formatZoneDisplay(targetZone, hrZones, workoutType);
+  const zoneLabel =
+    targetZone && zoneDisplay.includes("bpm")
+      ? t("zoneRange", {
+          zone: targetZone.replace("zone", ""),
+          range: zoneDisplay,
+        })
+      : t("rpeGuide", { rpe: getRpeGuide(workoutType) });
+
+  const detailSummary = session
+    ? formatWorkoutDetailSummary(
+        workoutType,
+        (session.workoutDetail as WorkoutDetail | null) ?? null,
+      )
+    : null;
 
   return (
     <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       <div className="lg:col-span-2">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          {t("weekOf", { current: weekIndex, total: totalWeeks })} · {t("phaseBase")}
+          {t("weekOf", { current: weekIndex, total: totalWeeks })} · {phaseLabel}
         </p>
         <h1 className="text-2xl font-semibold leading-relaxed">{t("logRun")}</h1>
       </div>
@@ -77,7 +111,8 @@ export default async function TodayPage() {
               <CardTitle>{tw(session!.workoutType)}</CardTitle>
               <CardDescription>
                 {t("minutesTarget", { minutes: Math.round(session!.targetDurationSec / 60) })}
-                {session!.targetZone ? ` · ${t("zoneTarget", { zone: session!.targetZone.replace("zone", "") })}` : ""}
+                {` · ${zoneLabel}`}
+                {detailSummary ? ` · ${detailSummary}` : ""}
               </CardDescription>
             </>
           )}

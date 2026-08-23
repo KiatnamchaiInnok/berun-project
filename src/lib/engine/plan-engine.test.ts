@@ -1,48 +1,182 @@
 import { describe, expect, it } from "vitest";
 import {
+  assignPhase,
   computeEwmaAcwr,
+  computeHrZones,
   evaluateDetraining,
   evaluatePainGate,
+  formatWorkoutDetailSummary,
   generatePlan,
   heatAdvisoryFromDewPoint,
   intensityShareFromRpe,
   longRunCapMinutes,
   reconcileNextWeekMinutes,
+  rpeAdjustedStep,
   tanakaHrMax,
 } from "./plan-engine";
 
+const baseInput = {
+  level: "beginner" as const,
+  currentWeeklyMinutes: 60,
+  currentLongRunMinutes: 20,
+  daysPerWeek: 3,
+  availableWeekdays: [1, 3, 5],
+  totalWeeks: 8 as const,
+  progressionRatePct: 10 as const,
+  buildWeeks: 3 as const,
+  recoveryReductionPct: 25,
+  startDate: new Date("2026-01-06"),
+};
+
+describe("assignPhase", () => {
+  it("assigns base for weeks 1-5 in 8-week plan", () => {
+    expect(assignPhase(1, 8)).toBe("base");
+    expect(assignPhase(5, 8)).toBe("base");
+    expect(assignPhase(6, 8)).toBe("build");
+    expect(assignPhase(8, 8)).toBe("build");
+  });
+
+  it("assigns base for weeks 1-7 in 12-week plan", () => {
+    expect(assignPhase(7, 12)).toBe("base");
+    expect(assignPhase(8, 12)).toBe("build");
+  });
+});
+
 describe("generatePlan", () => {
   it("creates correct number of weeks", () => {
-    const result = generatePlan({
-      level: "beginner",
-      currentWeeklyMinutes: 60,
-      currentLongRunMinutes: 20,
-      daysPerWeek: 3,
-      availableWeekdays: [1, 3, 5],
-      totalWeeks: 8,
-      progressionRatePct: 10,
-      buildWeeks: 3,
-      recoveryReductionPct: 25,
-      startDate: new Date("2026-01-06"),
-    });
+    const result = generatePlan(baseInput);
     expect(result.weeks).toHaveLength(8);
   });
 
   it("includes recovery weeks", () => {
     const result = generatePlan({
+      ...baseInput,
       level: "regular",
       currentWeeklyMinutes: 120,
       currentLongRunMinutes: 45,
       daysPerWeek: 4,
       availableWeekdays: [1, 2, 4, 6],
       totalWeeks: 12,
-      progressionRatePct: 10,
-      buildWeeks: 3,
-      recoveryReductionPct: 25,
-      startDate: new Date("2026-01-06"),
     });
     const recoveryWeeks = result.weeks.filter((w) => w.isRecoveryWeek);
     expect(recoveryWeeks.length).toBeGreaterThan(0);
+  });
+
+  it("assigns base phase to early weeks and build to later weeks", () => {
+    const result = generatePlan(baseInput);
+    expect(result.weeks[0].phase).toBe("base");
+    expect(result.weeks[4].phase).toBe("base");
+    expect(result.weeks[5].phase).toBe("build");
+  });
+
+  it("beginner base has runWalk early then strides", () => {
+    const result = generatePlan(baseInput);
+    const week1Types = result.weeks[0].sessions.map((s) => s.workoutType);
+    expect(week1Types).toContain("runWalk");
+
+    const week4 = result.weeks.find((w) => w.weekIndex === 4 && !w.isRecoveryWeek);
+    expect(week4?.sessions.some((s) => s.workoutType === "strides")).toBe(true);
+  });
+
+  it("regular build has tempo and intervals", () => {
+    const result = generatePlan({
+      ...baseInput,
+      level: "regular",
+      currentWeeklyMinutes: 120,
+      currentLongRunMinutes: 40,
+      daysPerWeek: 4,
+      availableWeekdays: [1, 2, 4, 6],
+      totalWeeks: 12,
+    });
+    const buildWeeks = result.weeks.filter(
+      (w) => w.phase === "build" && !w.isRecoveryWeek,
+    );
+    expect(buildWeeks.length).toBeGreaterThan(0);
+    const types = buildWeeks.flatMap((w) => w.sessions.map((s) => s.workoutType));
+    expect(types).toContain("tempo");
+    expect(types).toContain("intervals");
+  });
+
+  it("recovery weeks have no quality sessions", () => {
+    const result = generatePlan({
+      ...baseInput,
+      level: "regular",
+      currentWeeklyMinutes: 120,
+      currentLongRunMinutes: 40,
+      daysPerWeek: 4,
+      availableWeekdays: [1, 2, 4, 6],
+    });
+    for (const week of result.weeks.filter((w) => w.isRecoveryWeek)) {
+      const types = week.sessions.map((s) => s.workoutType);
+      expect(types).not.toContain("tempo");
+      expect(types).not.toContain("intervals");
+      expect(types).not.toContain("fartlek");
+    }
+  });
+
+  it("uses step loading not flat percentage", () => {
+    const result = generatePlan(baseInput);
+    const week2 = result.weeks.find((w) => w.weekIndex === 2 && !w.isRecoveryWeek);
+    const week3 = result.weeks.find((w) => w.weekIndex === 3 && !w.isRecoveryWeek);
+    if (week2 && week3) {
+      const diff = week3.targetMinutes - week2.targetMinutes;
+      expect(diff).toBeGreaterThan(0);
+      expect(diff).toBeLessThanOrEqual(15);
+    }
+  });
+
+  it("stores workout detail for quality sessions", () => {
+    const result = generatePlan({
+      ...baseInput,
+      level: "returning",
+      currentWeeklyMinutes: 90,
+      currentLongRunMinutes: 30,
+      totalWeeks: 8,
+    });
+    const buildWeek = result.weeks.find(
+      (w) => w.phase === "build" && !w.isRecoveryWeek,
+    );
+    const tempo = buildWeek?.sessions.find((s) => s.workoutType === "tempo");
+    expect(tempo?.workoutDetail).toBeTruthy();
+    expect(tempo?.workoutDetail).toHaveProperty("steadyMinutes");
+  });
+});
+
+describe("rpeAdjustedStep", () => {
+  it("increases step when RPE is low", () => {
+    expect(rpeAdjustedStep(10, 3)).toBe(13);
+  });
+
+  it("holds step when RPE is appropriate", () => {
+    expect(rpeAdjustedStep(10, 5)).toBe(10);
+  });
+
+  it("reduces step when RPE is high", () => {
+    expect(rpeAdjustedStep(10, 7)).toBe(5);
+  });
+
+  it("holds volume when RPE is very high", () => {
+    expect(rpeAdjustedStep(10, 9)).toBe(0);
+  });
+});
+
+describe("computeHrZones", () => {
+  it("uses Karvonen when resting HR is provided", () => {
+    const zones = computeHrZones(190, 50);
+    expect(zones?.method).toBe("karvonen");
+    expect(zones?.zone2.min).toBeGreaterThan(Math.round(190 * 0.6));
+    expect(zones?.zone2.max).toBeLessThanOrEqual(Math.round(190 * 0.7 + 50));
+  });
+
+  it("falls back to %HRmax without resting HR", () => {
+    const zones = computeHrZones(190);
+    expect(zones?.method).toBe("hrmax");
+    expect(zones?.zone2.min).toBe(Math.round(190 * 0.6));
+    expect(zones?.zone2.max).toBe(Math.round(190 * 0.7));
+  });
+
+  it("returns null without hrMax", () => {
+    expect(computeHrZones(0)).toBeNull();
   });
 });
 
@@ -53,7 +187,18 @@ describe("reconcileNextWeekMinutes", () => {
       actualWeekMinutes: [80, 90, 110],
     });
     expect(next).toBeGreaterThan(80);
-    expect(next).toBeLessThanOrEqual(110);
+    expect(next).toBeLessThanOrEqual(120);
+  });
+
+  it("applies step loading with RPE when level provided", () => {
+    const next = reconcileNextWeekMinutes({
+      plannedWeekMinutes: 100,
+      actualWeekMinutes: [100, 100, 100],
+      level: "beginner",
+      phase: "base",
+      lastWeekAvgRpe: 3,
+    });
+    expect(next).toBeGreaterThan(100);
   });
 });
 
@@ -72,7 +217,10 @@ describe("evaluatePainGate", () => {
 
 describe("evaluateDetraining", () => {
   it("requires rebaseline after 21 days", () => {
-    const result = evaluateDetraining({ daysSinceLastActivity: 25, avgMinutesBeforeGap: 90 });
+    const result = evaluateDetraining({
+      daysSinceLastActivity: 25,
+      avgMinutesBeforeGap: 90,
+    });
     expect(result.rebaseline).toBe(true);
   });
 });
@@ -117,5 +265,17 @@ describe("tanakaHrMax", () => {
 describe("longRunCap", () => {
   it("caps long run at 30% for beginners", () => {
     expect(longRunCapMinutes(30, 100, "beginner")).toBeLessThanOrEqual(30);
+  });
+});
+
+describe("formatWorkoutDetailSummary", () => {
+  it("formats interval detail", () => {
+    const summary = formatWorkoutDetailSummary("intervals", {
+      repDistanceM: 800,
+      reps: 5,
+      restSec: 90,
+      targetZone: "zone4",
+    });
+    expect(summary).toBe("5x800m");
   });
 });

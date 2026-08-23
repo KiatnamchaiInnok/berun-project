@@ -77,6 +77,7 @@ async function main() {
         blockIndex: week.blockIndex,
         weekStartDate: week.weekStartDate,
         isRecoveryWeek: week.isRecoveryWeek,
+        phase: week.phase,
         targetMinutes: week.targetMinutes,
         targetLongRunMinutes: week.targetLongRunMinutes,
         targetEasySharePct: week.targetEasySharePct,
@@ -94,6 +95,7 @@ async function main() {
           targetDurationSec: session.targetDurationSec,
           targetZone: session.targetZone ?? undefined,
           runWalkPattern: (session.runWalkPattern ?? undefined) as object | undefined,
+          workoutDetail: (session.workoutDetail ?? undefined) as object | undefined,
         },
       });
     }

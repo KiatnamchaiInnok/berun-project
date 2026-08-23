@@ -153,6 +153,7 @@ export async function createPlanFromOnboarding(input: {
         blockIndex: week.blockIndex,
         weekStartDate: week.weekStartDate,
         isRecoveryWeek: week.isRecoveryWeek,
+        phase: week.phase,
         targetMinutes: week.targetMinutes,
         targetLongRunMinutes: week.targetLongRunMinutes,
         targetEasySharePct: week.targetEasySharePct,
@@ -170,6 +171,7 @@ export async function createPlanFromOnboarding(input: {
           targetDurationSec: session.targetDurationSec,
           targetZone: session.targetZone ?? undefined,
           runWalkPattern: (session.runWalkPattern ?? undefined) as object | undefined,
+          workoutDetail: (session.workoutDetail ?? undefined) as object | undefined,
         },
       });
     }

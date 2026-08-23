@@ -13,6 +13,9 @@
   "today": {
     "weekOf": "Week {current} of {total}",
     "phaseBase": "Base building",
+    "phaseBuild": "Build phase",
+    "zoneRange": "Zone {zone} ({range})",
+    "rpeGuide": "RPE {rpe}",
     "restDay": "Rest day",
     "restReason": "Recovery as planned",
     "logRun": "Log run",
@@ -56,7 +59,9 @@
     "targetMinutes": "Target {minutes} min",
     "reconcile": "Update plan from actuals",
     "preview": "Preview changes",
-    "confirm": "Confirm update"
+    "confirm": "Confirm update",
+    "phaseBase": "Base",
+    "phaseBuild": "Build"
   },
   "progress": {
     "title": "Progress",
@@ -120,7 +125,10 @@
     "long": "Long",
     "tempo": "Tempo",
     "runWalk": "Run-walk",
-    "rest": "Rest"
+    "rest": "Rest",
+    "strides": "Strides",
+    "fartlek": "Fartlek",
+    "intervals": "Intervals"
   },
   "glossary": {
     "title": "Glossary",
