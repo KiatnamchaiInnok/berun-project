@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { SessionDetail } from "@/components/plan/session-detail";
+import { RestDayRow } from "@/components/plan/rest-day-row";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { reconcilePlan } from "@/lib/actions/training";
@@ -15,6 +16,7 @@ import {
   formatWorkoutDetailSummary,
   getRpeGuide,
   type IntensityZone,
+  type StrengthDetail,
   type WorkoutDetail,
   type WorkoutType,
 } from "@/lib/engine/plan-engine";
@@ -24,6 +26,7 @@ export default async function PlanPage() {
   const t = await getTranslations("plan");
   const tw = await getTranslations("workout");
   const ts = await getTranslations("segment");
+  const tStrength = await getTranslations("strength");
   const locale = await getLocale();
   const session = await auth();
   const userId = session?.user?.id;
@@ -73,7 +76,12 @@ export default async function PlanPage() {
           end.setDate(end.getDate() + 6);
           const isCurrent = today >= week.weekStartDate && today <= end;
           const completedMin = week.sessions
-            .filter((s) => s.status === "completed")
+            .filter(
+              (s) =>
+                s.status === "completed" &&
+                s.workoutType !== "rest" &&
+                s.workoutType !== "strength",
+            )
             .reduce((sum, s) => sum + s.targetDurationSec / 60, 0);
           const pct = week.targetMinutes ? Math.round((completedMin / week.targetMinutes) * 100) : 0;
           const phaseLabel = week.phase === "build" ? t("phaseBuild") : t("phaseBase");
@@ -101,19 +109,53 @@ export default async function PlanPage() {
                 <ul className="flex flex-col gap-2">
                   {week.sessions.map((s) => {
                     const workoutType = s.workoutType as WorkoutType;
+                    const sessionMinutes = Math.round(s.targetDurationSec / 60);
+
+                    if (workoutType === "rest") {
+                      return (
+                        <li key={s.id}>
+                          <RestDayRow
+                            header={
+                              <>
+                                <span>{formatShortDate(s.scheduledDate, locale)}</span>
+                                <span>{tw("rest")}</span>
+                              </>
+                            }
+                          />
+                        </li>
+                      );
+                    }
+
                     const targetZone = (s.targetZone ?? null) as IntensityZone | null;
                     const zoneDisplay = formatZoneDisplay(targetZone, hrZones, workoutType);
                     const workoutDetail = (s.workoutDetail as WorkoutDetail | null) ?? null;
                     const detailSummary = formatWorkoutDetailSummary(workoutType, workoutDetail);
                     const detailSummaryText = detailSummary
-                      ? ts(detailSummary.key as Parameters<typeof ts>[0], detailSummary.params)
+                      ? workoutType === "strength"
+                        ? tStrength(
+                            detailSummary.key as Parameters<typeof tStrength>[0],
+                            detailSummary.params,
+                          )
+                        : ts(
+                            detailSummary.key as Parameters<typeof ts>[0],
+                            detailSummary.params,
+                          )
                       : null;
                     const zoneText =
-                      targetZone && zoneDisplay.includes("bpm")
-                        ? `Z${targetZone.replace("zone", "")} ${zoneDisplay}`
-                        : `RPE ${getRpeGuide(workoutType)}`;
-                    const sessionMinutes = Math.round(s.targetDurationSec / 60);
-                    const segments = buildWorkoutSegments(workoutType, workoutDetail, sessionMinutes);
+                      workoutType === "strength"
+                        ? `RPE ${getRpeGuide(workoutType)}`
+                        : targetZone && zoneDisplay.includes("bpm")
+                          ? `Z${targetZone.replace("zone", "")} ${zoneDisplay}`
+                          : `RPE ${getRpeGuide(workoutType)}`;
+                    const segments = buildWorkoutSegments(
+                      workoutType,
+                      workoutDetail,
+                      sessionMinutes,
+                    );
+                    const strengthExercises =
+                      workoutType === "strength" && workoutDetail
+                        ? (workoutDetail as StrengthDetail).exercises
+                        : undefined;
 
                     return (
                       <li key={s.id}>
@@ -122,7 +164,8 @@ export default async function PlanPage() {
                             <>
                               <span>{formatShortDate(s.scheduledDate, locale)}</span>
                               <span className="tabular-nums">
-                                {tw(s.workoutType)} · {sessionMinutes}m
+                                {tw(workoutType)}
+                                {sessionMinutes > 0 ? ` · ${sessionMinutes}m` : ""}
                               </span>
                             </>
                           }
@@ -134,6 +177,7 @@ export default async function PlanPage() {
                           }
                           segments={segments}
                           hrZones={hrZones}
+                          strengthExercises={strengthExercises}
                         />
                       </li>
                     );

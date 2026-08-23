@@ -15,7 +15,7 @@ export function TodayActions({
 }) {
   const t = useTranslations("today");
 
-  if (workoutType === "rest" || !sessionId) {
+  if (workoutType === "rest" || workoutType === "strength" || !sessionId) {
     return null;
   }
 

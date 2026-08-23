@@ -21,6 +21,7 @@ enum WorkoutType {
   strides
   fartlek
   intervals
+  strength
 }
 
 enum TrainingPhase {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assignPhase,
+  buildStrengthProgram,
   buildWorkoutSegments,
   computeEwmaAcwr,
   computeHrZones,
@@ -14,6 +15,7 @@ import {
   reconcileNextWeekMinutes,
   rpeAdjustedStep,
   tanakaHrMax,
+  type WorkoutType,
 } from "./plan-engine";
 
 const baseInput = {
@@ -72,10 +74,18 @@ describe("generatePlan", () => {
 
   it("beginner base has runWalk early then strides", () => {
     const result = generatePlan(baseInput);
-    const week1Types = result.weeks[0].sessions.map((s) => s.workoutType);
+    const week1Running = result.weeks[0].sessions.filter(
+      (s) => s.workoutType !== "rest" && s.workoutType !== "strength",
+    );
+    const week1Types = week1Running.map((s) => s.workoutType);
     expect(week1Types).toContain("runWalk");
 
     const week4 = result.weeks.find((w) => w.weekIndex === 4 && !w.isRecoveryWeek);
+    expect(
+      week4?.sessions.some(
+        (s) => s.workoutType === "strides" || s.workoutType === "easy",
+      ),
+    ).toBe(true);
     expect(week4?.sessions.some((s) => s.workoutType === "strides")).toBe(true);
   });
 
@@ -352,5 +362,125 @@ describe("buildWorkoutSegments", () => {
 
   it("returns null for rest", () => {
     expect(buildWorkoutSegments("rest", null, 0)).toBeNull();
+  });
+
+  it("builds strength segments with variant", () => {
+    const detail = buildStrengthProgram("beginner", "base", false);
+    const result = buildWorkoutSegments("strength", detail, detail.estimatedMinutes);
+    expect(result?.variant).toBe("strength");
+    expect(result?.segments.some((s) => s.labelKey === "lowerBody")).toBe(true);
+    expect(result?.segments.some((s) => s.labelKey === "core")).toBe(true);
+  });
+});
+
+describe("buildStrengthProgram", () => {
+  it("returns foundation focus in base phase", () => {
+    const program = buildStrengthProgram("beginner", "base", false);
+    expect(program.focusKey).toBe("foundation");
+    expect(program.exercises.length).toBeGreaterThan(0);
+  });
+
+  it("adds plyometrics for regular build phase", () => {
+    const program = buildStrengthProgram("regular", "build", false);
+    expect(program.focusKey).toBe("power");
+    expect(program.exercises.some((e) => e.categoryKey === "plyo")).toBe(true);
+  });
+
+  it("reduces volume in recovery week", () => {
+    const normal = buildStrengthProgram("returning", "build", false);
+    const recovery = buildStrengthProgram("returning", "build", true);
+    expect(recovery.focusKey).toBe("maintenance");
+    expect(recovery.exercises.every((e) => e.sets <= 2)).toBe(true);
+    expect(recovery.exercises.some((e) => e.categoryKey === "plyo")).toBe(false);
+    expect(recovery.exercises.length).toBeLessThanOrEqual(normal.exercises.length);
+  });
+});
+
+const HARD_TYPES: WorkoutType[] = ["long", "tempo", "intervals", "fartlek"];
+
+function dayBeforeHardRun(
+  sessions: Array<{ scheduledDate: Date; workoutType: WorkoutType }>,
+): boolean {
+  const byDate = new Map(
+    sessions.map((s) => [s.scheduledDate.toISOString().slice(0, 10), s.workoutType]),
+  );
+  for (const s of sessions) {
+    if (s.workoutType !== "strength") continue;
+    const next = new Date(s.scheduledDate);
+    next.setUTCDate(next.getUTCDate() + 1);
+    const nextType = byDate.get(next.toISOString().slice(0, 10));
+    if (nextType && HARD_TYPES.includes(nextType)) return true;
+  }
+  return false;
+}
+
+describe("rest and strength scheduling", () => {
+  it("generates 7 sessions per week", () => {
+    const result = generatePlan(baseInput);
+    for (const week of result.weeks) {
+      expect(week.sessions).toHaveLength(7);
+    }
+  });
+
+  it("includes rest and strength days", () => {
+    const result = generatePlan(baseInput);
+    const week1 = result.weeks[0];
+    expect(week1.sessions.some((s) => s.workoutType === "rest")).toBe(true);
+    expect(week1.sessions.some((s) => s.workoutType === "strength")).toBe(true);
+  });
+
+  it("never schedules strength the day before a hard run", () => {
+    const result = generatePlan({
+      ...baseInput,
+      level: "regular",
+      currentWeeklyMinutes: 120,
+      currentLongRunMinutes: 40,
+      daysPerWeek: 4,
+      availableWeekdays: [1, 2, 4, 6],
+      totalWeeks: 12,
+    });
+    for (const week of result.weeks) {
+      expect(dayBeforeHardRun(week.sessions)).toBe(false);
+    }
+  });
+
+  it("keeps at least one pure rest day per week", () => {
+    const result = generatePlan(baseInput);
+    for (const week of result.weeks) {
+      expect(week.sessions.filter((s) => s.workoutType === "rest").length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("limits strength sessions in recovery weeks", () => {
+    const result = generatePlan({
+      ...baseInput,
+      level: "regular",
+      currentWeeklyMinutes: 120,
+      currentLongRunMinutes: 40,
+      daysPerWeek: 4,
+      availableWeekdays: [1, 2, 4, 6],
+    });
+    for (const week of result.weeks.filter((w) => w.isRecoveryWeek)) {
+      const strengthCount = week.sessions.filter((s) => s.workoutType === "strength").length;
+      expect(strengthCount).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("excludes strength minutes from targetMinutes", () => {
+    const result = generatePlan(baseInput);
+    const week = result.weeks[0];
+    const runningMinutes = week.sessions
+      .filter((s) => s.workoutType !== "rest" && s.workoutType !== "strength")
+      .reduce((sum, s) => sum + s.targetDurationSec / 60, 0);
+    expect(week.targetMinutes).toBe(Math.round(runningMinutes));
+  });
+
+  it("formats strength detail summary", () => {
+    const detail = buildStrengthProgram("beginner", "base", false);
+    const summary = formatWorkoutDetailSummary("strength", detail);
+    expect(summary).toEqual({
+      key: "summary",
+      params: { count: detail.exercises.length, minutes: detail.estimatedMinutes },
+    });
   });
 });

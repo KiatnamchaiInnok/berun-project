@@ -10,7 +10,8 @@ export type WorkoutType =
   | "rest"
   | "strides"
   | "fartlek"
-  | "intervals";
+  | "intervals"
+  | "strength";
 export type IntensityZone = "zone1" | "zone2" | "zone3" | "zone4" | "zone5";
 
 export interface ZoneRange {
@@ -57,11 +58,27 @@ export interface TempoDetail {
   cooldownMin: number;
 }
 
+export interface StrengthExercise {
+  nameKey: string;
+  sets: number;
+  reps: number;
+  isUnilateral: boolean;
+  isTimed: boolean;
+  categoryKey: "lower" | "core" | "plyo";
+}
+
+export interface StrengthDetail {
+  exercises: StrengthExercise[];
+  estimatedMinutes: number;
+  focusKey: "foundation" | "power" | "maintenance";
+}
+
 export type WorkoutDetail =
   | StridesDetail
   | FartlekDetail
   | IntervalsDetail
-  | TempoDetail;
+  | TempoDetail
+  | StrengthDetail;
 
 export type SegmentType = "warmup" | "activation" | "main" | "rest" | "cooldown";
 
@@ -78,6 +95,7 @@ export interface WorkoutSegment {
 export interface WorkoutSegments {
   segments: WorkoutSegment[];
   totalDurationMin: number;
+  variant?: "running" | "strength";
 }
 
 export interface WorkoutDetailSummary {
@@ -175,6 +193,18 @@ const RPE_GUIDE: Record<WorkoutType, string> = {
   tempo: "6-7",
   intervals: "8-9",
   rest: "1-2",
+  strength: "4-6",
+};
+
+const HARD_RUNNING_TYPES: WorkoutType[] = ["long", "tempo", "intervals", "fartlek"];
+
+const MAX_STRENGTH_DAYS: Record<
+  Level,
+  { normal: number; recovery: number }
+> = {
+  beginner: { normal: 2, recovery: 1 },
+  returning: { normal: 2, recovery: 1 },
+  regular: { normal: 3, recovery: 1 },
 };
 
 function addDays(date: Date, days: number): Date {
@@ -307,6 +337,140 @@ function buildTempoDetail(minutes: number): TempoDetail {
   return { steadyMinutes: steady, warmupMin: 10, cooldownMin: 10 };
 }
 
+function strengthExercise(
+  nameKey: string,
+  sets: number,
+  reps: number,
+  categoryKey: "lower" | "core" | "plyo",
+  isUnilateral = false,
+  isTimed = false,
+): StrengthExercise {
+  return { nameKey, sets, reps, isUnilateral, isTimed, categoryKey };
+}
+
+function estimateStrengthMinutes(exercises: StrengthExercise[]): number {
+  let total = 5; // warmup
+  for (const ex of exercises) {
+    const workPerSet = ex.isTimed ? ex.reps / 60 + 0.5 : 1.5;
+    total += ex.sets * workPerSet;
+  }
+  total += 5; // cooldown
+  return Math.max(15, Math.round(total));
+}
+
+export function buildStrengthProgram(
+  level: Level,
+  phase: TrainingPhase,
+  isRecovery: boolean,
+): StrengthDetail {
+  const adjustSets = (sets: number) => (isRecovery ? Math.min(2, sets) : sets);
+  const focusKey: StrengthDetail["focusKey"] = isRecovery
+    ? "maintenance"
+    : phase === "base"
+      ? "foundation"
+      : "power";
+
+  let exercises: StrengthExercise[] = [];
+
+  if (phase === "base") {
+    if (level === "beginner") {
+      exercises = [
+        strengthExercise("gluteBridge", adjustSets(2), 15, "lower"),
+        strengthExercise("squat", adjustSets(2), 12, "lower"),
+        strengthExercise("reverseLunge", adjustSets(2), 10, "lower", true),
+        strengthExercise("plank", adjustSets(2), 30, "core", false, true),
+        strengthExercise("calfRaise", adjustSets(2), 15, "lower"),
+      ];
+    } else if (level === "returning") {
+      exercises = [
+        strengthExercise("singleLegGluteBridge", adjustSets(3), 12, "lower", true),
+        strengthExercise("gobletSquat", adjustSets(3), 10, "lower"),
+        strengthExercise("walkingLunge", adjustSets(3), 10, "lower", true),
+        strengthExercise("deadBug", adjustSets(3), 10, "core", true),
+        strengthExercise("singleLegCalfRaise", adjustSets(3), 12, "lower", true),
+        strengthExercise("sidePlank", adjustSets(2), 20, "core", true, true),
+      ];
+    } else {
+      exercises = [
+        strengthExercise("hipThrust", adjustSets(3), 10, "lower"),
+        strengthExercise("bulgarianSplitSquat", adjustSets(3), 8, "lower", true),
+        strengthExercise("singleLegRDL", adjustSets(3), 8, "lower", true),
+        strengthExercise("pallofPress", adjustSets(3), 10, "core", true),
+        strengthExercise("calfRaise", adjustSets(3), 8, "lower", true),
+        strengthExercise("nordicCurl", adjustSets(3), 6, "lower"),
+      ];
+    }
+  } else if (level === "beginner") {
+    exercises = [
+      strengthExercise("gluteBridge", adjustSets(2), 15, "lower"),
+      strengthExercise("squat", adjustSets(2), 12, "lower"),
+      strengthExercise("reverseLunge", adjustSets(2), 10, "lower", true),
+      strengthExercise("plank", adjustSets(2), 30, "core", false, true),
+      strengthExercise("calfRaise", adjustSets(2), 15, "lower"),
+    ];
+  } else if (level === "returning") {
+    exercises = [
+      strengthExercise("gobletSquat", adjustSets(3), 8, "lower"),
+      strengthExercise("walkingLunge", adjustSets(3), 8, "lower", true),
+      strengthExercise("singleLegRDL", adjustSets(3), 8, "lower", true),
+      strengthExercise("boxStepUp", adjustSets(3), 8, "lower", true),
+      strengthExercise("singleLegCalfRaise", adjustSets(3), 10, "lower", true),
+      strengthExercise("sidePlankHipDip", adjustSets(2), 10, "core", true),
+    ];
+  } else {
+    exercises = [
+      strengthExercise("gobletSquat", adjustSets(3), 8, "lower"),
+      strengthExercise("walkingLunge", adjustSets(3), 8, "lower", true),
+      strengthExercise("singleLegRDL", adjustSets(3), 8, "lower", true),
+      strengthExercise("boxStepUp", adjustSets(3), 8, "lower", true),
+      strengthExercise("singleLegCalfRaise", adjustSets(3), 10, "lower", true),
+      strengthExercise("sidePlankHipDip", adjustSets(2), 10, "core", true),
+    ];
+    if (!isRecovery) {
+      exercises.push(
+        strengthExercise("boxJump", adjustSets(3), 5, "plyo"),
+        strengthExercise("singleLegHop", adjustSets(3), 5, "plyo", true),
+      );
+    }
+  }
+
+  return {
+    exercises,
+    estimatedMinutes: estimateStrengthMinutes(exercises),
+    focusKey,
+  };
+}
+
+function isHardRunningWorkout(type: WorkoutType): boolean {
+  return HARD_RUNNING_TYPES.includes(type);
+}
+
+function weekdayFromDate(date: Date): number {
+  return date.getUTCDay();
+}
+
+function nextWeekday(weekday: number): number {
+  return (weekday + 1) % 7;
+}
+
+function pickStrengthWeekdays(
+  restWeekdays: number[],
+  hardRunningWeekdays: Set<number>,
+  maxStrength: number,
+): Set<number> {
+  if (restWeekdays.length === 0 || maxStrength <= 0) {
+    return new Set();
+  }
+
+  const eligible = restWeekdays.filter(
+    (wd) => !hardRunningWeekdays.has(nextWeekday(wd)),
+  );
+  const maxAssignable = Math.max(0, restWeekdays.length - 1);
+  const count = Math.min(maxStrength, eligible.length, maxAssignable);
+
+  return new Set(eligible.sort((a, b) => a - b).slice(0, count));
+}
+
 function pickWorkoutForSlot(
   slotIndex: number,
   totalSlots: number,
@@ -380,6 +544,8 @@ function createSessionDraft(
   workoutType: WorkoutType,
   minutes: number,
   level: Level,
+  phase?: TrainingPhase,
+  isRecovery?: boolean,
 ): PlannedSessionDraft {
   const zoneMap: Record<WorkoutType, IntensityZone | null> = {
     runWalk: "zone1",
@@ -390,6 +556,7 @@ function createSessionDraft(
     tempo: "zone3",
     intervals: "zone4",
     rest: null,
+    strength: null,
   };
 
   let runWalkPattern: RunWalkPattern | null = null;
@@ -409,6 +576,8 @@ function createSessionDraft(
     workoutDetail = buildIntervalsDetail(level);
   } else if (workoutType === "tempo") {
     workoutDetail = buildTempoDetail(minutes);
+  } else if (workoutType === "strength" && phase != null && isRecovery != null) {
+    workoutDetail = buildStrengthProgram(level, phase, isRecovery);
   }
 
   return {
@@ -419,6 +588,21 @@ function createSessionDraft(
     targetZone: zoneMap[workoutType],
     runWalkPattern,
     workoutDetail,
+  };
+}
+
+function createRestSessionDraft(
+  scheduledDate: Date,
+  sequence: number,
+): PlannedSessionDraft {
+  return {
+    scheduledDate,
+    sequence,
+    workoutType: "rest",
+    targetDurationSec: 0,
+    targetZone: null,
+    runWalkPattern: null,
+    workoutDetail: null,
   };
 }
 
@@ -434,11 +618,12 @@ function distributeSessions(
   weekIndex: number,
 ): PlannedSessionDraft[] {
   const sorted = [...weekdays].sort((a, b) => a - b).slice(0, count);
-  const sessions: PlannedSessionDraft[] = [];
+  const runningByWeekday = new Map<
+    number,
+    { workoutType: WorkoutType; minutes: number }
+  >();
 
   sorted.forEach((wd, idx) => {
-    const dayOffset = (wd - weekStart.getUTCDay() + 7) % 7;
-    const scheduledDate = addDays(weekStart, dayOffset);
     const workoutType = pickWorkoutForSlot(
       idx,
       sorted.length,
@@ -455,11 +640,59 @@ function distributeSessions(
       longRunMinutes,
     );
     if (minutes <= 0) return;
-
-    sessions.push(
-      createSessionDraft(scheduledDate, idx, workoutType, minutes, level),
-    );
+    runningByWeekday.set(wd, { workoutType, minutes });
   });
+
+  const hardRunningWeekdays = new Set(
+    [...runningByWeekday.entries()]
+      .filter(([, v]) => isHardRunningWorkout(v.workoutType))
+      .map(([wd]) => wd),
+  );
+
+  const restWeekdays = [0, 1, 2, 3, 4, 5, 6].filter((wd) => !sorted.includes(wd));
+  const maxStrength = isRecovery
+    ? MAX_STRENGTH_DAYS[level].recovery
+    : MAX_STRENGTH_DAYS[level].normal;
+  const strengthWeekdays = pickStrengthWeekdays(
+    restWeekdays,
+    hardRunningWeekdays,
+    maxStrength,
+  );
+
+  const sessions: PlannedSessionDraft[] = [];
+
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const scheduledDate = addDays(weekStart, dayOffset);
+    const wd = weekdayFromDate(scheduledDate);
+    const running = runningByWeekday.get(wd);
+
+    if (running) {
+      sessions.push(
+        createSessionDraft(
+          scheduledDate,
+          dayOffset,
+          running.workoutType,
+          running.minutes,
+          level,
+        ),
+      );
+    } else if (strengthWeekdays.has(wd)) {
+      const detail = buildStrengthProgram(level, phase, isRecovery);
+      sessions.push(
+        createSessionDraft(
+          scheduledDate,
+          dayOffset,
+          "strength",
+          detail.estimatedMinutes,
+          level,
+          phase,
+          isRecovery,
+        ),
+      );
+    } else {
+      sessions.push(createRestSessionDraft(scheduledDate, dayOffset));
+    }
+  }
 
   return sessions;
 }
@@ -751,6 +984,20 @@ function isTempoDetail(d: WorkoutDetail): d is TempoDetail {
   return "steadyMinutes" in d && "warmupMin" in d;
 }
 
+function isStrengthDetail(d: WorkoutDetail): d is StrengthDetail {
+  return "exercises" in d && "focusKey" in d;
+}
+
+function categoryMinutes(exercises: StrengthExercise[], category: "lower" | "core" | "plyo"): number {
+  let total = 0;
+  for (const ex of exercises) {
+    if (ex.categoryKey !== category) continue;
+    const workPerSet = ex.isTimed ? ex.reps / 60 + 0.5 : 1.5;
+    total += ex.sets * workPerSet;
+  }
+  return Math.max(category === "plyo" ? 0 : 1, Math.round(total));
+}
+
 export function buildWorkoutSegments(
   workoutType: WorkoutType,
   detail: WorkoutDetail | null,
@@ -884,6 +1131,35 @@ export function buildWorkoutSegments(
       );
       break;
     }
+    case "strength": {
+      const strength =
+        detail && isStrengthDetail(detail)
+          ? detail
+          : buildStrengthProgram("beginner", "base", false);
+      const warmup = 5;
+      const cooldown = 5;
+      const lowerMin = categoryMinutes(strength.exercises, "lower");
+      const coreMin = categoryMinutes(strength.exercises, "core");
+      const plyoMin = categoryMinutes(strength.exercises, "plyo");
+      segments.push(
+        segment("warmup", warmup, null, "2-3", "warmup"),
+        segment("main", lowerMin, null, "4-6", "lowerBody"),
+        segment("main", coreMin, null, "4-5", "core"),
+      );
+      if (plyoMin > 0) {
+        segments.push(segment("main", plyoMin, null, "6-7", "plyometric"));
+      }
+      segments.push(segment("cooldown", cooldown, null, "1-2", "stretch"));
+      const sum = segments.reduce((acc, s) => acc + s.durationMin, 0);
+      if (sum !== total && segments.length > 0) {
+        const lowerIdx = segments.findIndex((s) => s.labelKey === "lowerBody");
+        if (lowerIdx >= 0) {
+          segments[lowerIdx].durationMin += total - sum;
+          segments[lowerIdx].durationMin = Math.max(1, segments[lowerIdx].durationMin);
+        }
+      }
+      return { segments, totalDurationMin: total, variant: "strength" };
+    }
     default:
       return null;
   }
@@ -935,6 +1211,15 @@ export function formatWorkoutDetailSummary(
       params: { minutes: detail.steadyMinutes },
     };
   }
+  if (workoutType === "strength" && isStrengthDetail(detail)) {
+    return {
+      key: "summary",
+      params: {
+        count: detail.exercises.length,
+        minutes: detail.estimatedMinutes,
+      },
+    };
+  }
   return null;
 }
 
@@ -953,4 +1238,23 @@ export function zoneColorClass(zone: IntensityZone | null): string {
     default:
       return "bg-muted";
   }
+}
+
+const STRENGTH_SEGMENT_COLORS: Record<string, string> = {
+  warmup: "bg-purple-200 dark:bg-purple-900",
+  lowerBody: "bg-purple-300 dark:bg-purple-800",
+  core: "bg-purple-400 dark:bg-purple-700",
+  plyometric: "bg-purple-500 dark:bg-purple-600",
+  stretch: "bg-purple-200 dark:bg-purple-900",
+  cooldown: "bg-purple-200 dark:bg-purple-900",
+};
+
+export function segmentColorClass(
+  seg: WorkoutSegment,
+  variant?: "running" | "strength",
+): string {
+  if (variant === "strength") {
+    return STRENGTH_SEGMENT_COLORS[seg.labelKey] ?? "bg-purple-300 dark:bg-purple-800";
+  }
+  return zoneColorClass(seg.zone);
 }

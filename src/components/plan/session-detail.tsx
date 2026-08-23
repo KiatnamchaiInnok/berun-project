@@ -5,21 +5,25 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   type HrZones,
+  type StrengthExercise,
   type WorkoutSegments,
 } from "@/lib/engine/plan-engine";
 import { WorkoutSegmentBreakdown } from "./workout-segment-breakdown";
+import { StrengthExerciseList } from "./strength-exercise-list";
 
 export function SessionDetail({
   header,
   subheader,
   segments,
   hrZones,
+  strengthExercises,
   defaultExpanded = false,
 }: {
   header: React.ReactNode;
   subheader?: React.ReactNode;
   segments: WorkoutSegments | null;
   hrZones: HrZones | null;
+  strengthExercises?: StrengthExercise[];
   defaultExpanded?: boolean;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -58,6 +62,9 @@ export function SessionDetail({
       {canExpand && expanded ? (
         <div className="border-t border-border px-3 pb-3 pt-3">
           <WorkoutSegmentBreakdown segments={segments!} hrZones={hrZones} />
+          {strengthExercises && strengthExercises.length > 0 ? (
+            <StrengthExerciseList exercises={strengthExercises} />
+          ) : null}
         </div>
       ) : null}
     </div>

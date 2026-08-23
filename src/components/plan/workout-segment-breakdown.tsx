@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import {
   formatZoneDisplay,
-  zoneColorClass,
+  segmentColorClass,
   type HrZones,
   type WorkoutSegment,
   type WorkoutSegments,
@@ -41,7 +41,10 @@ export function WorkoutSegmentBreakdown({
         {segments.segments.map((seg, i) => (
           <div
             key={`${seg.type}-${seg.labelKey}-${i}`}
-            className={cn(zoneColorClass(seg.zone), "min-w-[4px] transition-all")}
+            className={cn(
+              segmentColorClass(seg, segments.variant),
+              "min-w-[4px] transition-all",
+            )}
             style={{ width: `${(seg.durationMin / total) * 100}%` }}
             title={t(seg.labelKey as "warmup")}
           />
@@ -50,7 +53,12 @@ export function WorkoutSegmentBreakdown({
 
       <ul className="flex flex-col gap-2">
         {segments.segments.map((seg, i) => (
-          <SegmentRow key={`${seg.type}-${seg.labelKey}-${i}`} segment={seg} hrZones={hrZones} />
+          <SegmentRow
+            key={`${seg.type}-${seg.labelKey}-${i}`}
+            segment={seg}
+            hrZones={hrZones}
+            variant={segments.variant}
+          />
         ))}
       </ul>
     </div>
@@ -60,9 +68,11 @@ export function WorkoutSegmentBreakdown({
 function SegmentRow({
   segment: seg,
   hrZones,
+  variant,
 }: {
   segment: WorkoutSegment;
   hrZones: HrZones | null;
+  variant?: "running" | "strength";
 }) {
   const t = useTranslations("segment");
 
@@ -82,7 +92,10 @@ function SegmentRow({
   return (
     <li className="flex items-start gap-3 text-sm leading-relaxed">
       <span
-        className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", zoneColorClass(seg.zone))}
+        className={cn(
+          "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+          segmentColorClass(seg, variant),
+        )}
         aria-hidden
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
